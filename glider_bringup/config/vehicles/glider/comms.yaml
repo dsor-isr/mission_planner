@@ -6,6 +6,16 @@ modem/modem_config:
     hasAHRS: false
     initializer: "{'@ZA': '1', '@ZX': '1'}"
 
+silent:
+    tslack: 1.0     # in seconds
+    # modem_name: 10.42.10.6    ?????????
+    #modems_list: ["1", "2"]
+    modems_list: ["8","9","10"]
+    slot_list: [5.0, 5.0, 5.0]   # in seconds
+    modem_id: 10
+    anchor: 8
+    tnew_start: 30      # in seconds
+
 pinger:
     tslack: 1.0
     # modem_name: "192.168.0.150" # real IP
