@@ -78,8 +78,8 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
  	// @.@ Problem variables
 
   // data measured by the glider (m_*)
-  double m_lat_ = 0.0;
-  double m_lon_ = 0.0;
+  double m_gps_lat_ = 0.0;
+  double m_gps_lon_ = 0.0;
   double m_depth_;
   double m_pitch_;
 

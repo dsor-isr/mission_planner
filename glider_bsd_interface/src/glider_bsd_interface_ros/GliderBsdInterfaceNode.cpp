@@ -48,12 +48,12 @@ void GliderBsdInterfaceNode::loadParams() {
 }
 
 void GliderBsdInterfaceNode::mLatCallback(const std_msgs::Float64 &msg) {
-  m_lat_ = msg.data / 100;
+  m_gps_lat_ = msg.data / 100;
   lat_received_ = true;
 }
 
 void GliderBsdInterfaceNode::mLonCallback(const std_msgs::Float64 &msg) {
-  m_lon_ = msg.data / 100;
+  m_gps_lon_ = msg.data / 100;
   lon_received_ = true;
 }
 
@@ -80,11 +80,11 @@ void GliderBsdInterfaceNode::initializeSubscribers() {
   // data measured by the glider (m_*)
 
   m_lat_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
-    "topics/subscribers/m_lat", "dummy"),
+    "topics/subscribers/m_gps_lat", "dummy"),
     10, &GliderBsdInterfaceNode::mLatCallback, this);
   
   m_lon_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
-    "topics/subscribers/m_lon", "dummy"),
+    "topics/subscribers/m_gps_lon", "dummy"),
     10, &GliderBsdInterfaceNode::mLonCallback, this);
   
   m_depth_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 

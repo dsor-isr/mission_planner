@@ -70,8 +70,8 @@ GliderBsdInterfaceNode:
     vehicle_name: "#vehicle#"
     topics:
         subscribers:
-            m_lat: "/glider0/glider/extctl/sensors/m_lat"
-            m_lon: "/glider0/glider/extctl/sensors/m_lon"
+            m_gps_lat: "/glider0/glider/extctl/sensors/m_gps_lat"
+            m_gps_lon: "/glider0/glider/extctl/sensors/m_gps_lon"
             m_depth: "/glider0/glider/extctl/sensors/m_depth"
             m_pitch: "/glider0/glider/extctl/sensors/m_pitch"
             yaw_ref: "/#vehicle#/ref/yaw"
