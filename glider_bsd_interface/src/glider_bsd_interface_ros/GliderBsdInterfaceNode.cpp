@@ -23,8 +23,10 @@ GliderBsdInterfaceNode::~GliderBsdInterfaceNode() {
   position_pub_.shutdown();
 
   // +.+ shutdown subscribers
-  m_lat_sub_.shutdown();  
-  m_lon_sub_.shutdown();  
+  m_est_lat_sub_.shutdown();  
+  m_est_lon_sub_.shutdown();
+  m_gps_lat_sub_.shutdown();  
+  m_gps_lon_sub_.shutdown();  
   m_depth_sub_.shutdown();
   m_pitch_sub_.shutdown();
   yaw_ref_sub_.shutdown();
@@ -47,14 +49,24 @@ void GliderBsdInterfaceNode::loadParams() {
 
 }
 
-void GliderBsdInterfaceNode::mLatCallback(const std_msgs::Float64 &msg) {
+void GliderBsdInterfaceNode::mGpsLatCallback(const std_msgs::Float64 &msg) {
   m_gps_lat_ = msg.data / 100;
-  lat_received_ = true;
+  gps_lat_received_ = true;
 }
 
-void GliderBsdInterfaceNode::mLonCallback(const std_msgs::Float64 &msg) {
+void GliderBsdInterfaceNode::mGpsLonCallback(const std_msgs::Float64 &msg) {
   m_gps_lon_ = msg.data / 100;
-  lon_received_ = true;
+  gps_lon_received_ = true;
+}
+
+void GliderBsdInterfaceNode::mEstLatCallback(const std_msgs::Float64 &msg) {
+  m_est_lat_ = msg.data / 100;
+  est_lat_received_ = true;
+}
+
+void GliderBsdInterfaceNode::mEstLonCallback(const std_msgs::Float64 &msg) {
+  m_est_lon_ = msg.data / 100;
+  est_lon_received_ = true;
 }
 
 void GliderBsdInterfaceNode::mDepthCallback(const std_msgs::Float32 &msg) {
@@ -79,13 +91,21 @@ void GliderBsdInterfaceNode::initializeSubscribers() {
 
   // data measured by the glider (m_*)
 
-  m_lat_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
-    "topics/subscribers/m_gps_lat", "dummy"),
-    10, &GliderBsdInterfaceNode::mLatCallback, this);
+  m_est_lat_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
+    "topics/subscribers/m_est_lat", "dummy"),
+    10, &GliderBsdInterfaceNode::mEstLatCallback, this);
   
-  m_lon_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
+  m_est_lon_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
+    "topics/subscribers/m_est_lon", "dummy"),
+    10, &GliderBsdInterfaceNode::mEstLonCallback, this);
+
+  m_gps_lat_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
+    "topics/subscribers/m_gps_lat", "dummy"),
+    10, &GliderBsdInterfaceNode::mGpsLatCallback, this);
+  
+  m_gps_lon_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
     "topics/subscribers/m_gps_lon", "dummy"),
-    10, &GliderBsdInterfaceNode::mLonCallback, this);
+    10, &GliderBsdInterfaceNode::mGpsLonCallback, this);
   
   m_depth_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
     "topics/subscribers/m_depth", "dummy"),
@@ -135,11 +155,11 @@ void GliderBsdInterfaceNode::initializeTimer() {
 void GliderBsdInterfaceNode::timerIterCallback(const ros::TimerEvent &event) {
 
   // if both latitude and longitude have been received, publish a position measurement
-  if (lat_received_ && lon_received_) {
-    glider_bsd_interface_alg_->publishPosition(m_lat_, m_lon_, position_pub_, vehicle_name_);
+  if (est_lat_received_ && est_lon_received_) {
+    glider_bsd_interface_alg_->publishPosition(m_est_lat_, m_est_lon_, position_pub_, vehicle_name_);
     
-    lat_received_ = false;
-    lon_received_ = false;
+    est_lat_received_ = false;
+    est_lon_received_ = false;
   }
 
 }

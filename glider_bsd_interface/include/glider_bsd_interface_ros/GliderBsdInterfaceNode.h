@@ -56,8 +56,10 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
  	// @.@ Subscribers
   
   // data measured by the glider (m_*)
-  ros::Subscriber m_lat_sub_;
-  ros::Subscriber m_lon_sub_;
+  ros::Subscriber m_gps_lat_sub_;
+  ros::Subscriber m_gps_lon_sub_;
+  ros::Subscriber m_est_lat_sub_;
+  ros::Subscriber m_est_lon_sub_;
   ros::Subscriber m_depth_sub_;
   ros::Subscriber m_pitch_sub_;
 
@@ -80,6 +82,8 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   // data measured by the glider (m_*)
   double m_gps_lat_ = 0.0;
   double m_gps_lon_ = 0.0;
+  double m_est_lat_ = 0.0;
+  double m_est_lon_ = 0.0;
   double m_depth_;
   double m_pitch_;
 
@@ -88,8 +92,10 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   double surge_ref_;
 
   // make sure position is only published when both lat and lon are known
-  bool lat_received_ = false;
-  bool lon_received_ = false;
+  bool est_lat_received_ = false;
+  bool est_lon_received_ = false;
+  bool gps_lat_received_ = false;
+  bool gps_lon_received_ = false;
 
   // algorithm instance
   std::unique_ptr<GliderBsdInterfaceAlgorithm> glider_bsd_interface_alg_;
@@ -142,8 +148,10 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
  	
   // @.@ Callbacks declaration
 
-  void mLatCallback(const std_msgs::Float64 &msg);
-  void mLonCallback(const std_msgs::Float64 &msg);
+  void mGpsLatCallback(const std_msgs::Float64 &msg);
+  void mGpsLonCallback(const std_msgs::Float64 &msg);
+  void mEstLatCallback(const std_msgs::Float64 &msg);
+  void mEstLonCallback(const std_msgs::Float64 &msg);
   void mDepthCallback(const std_msgs::Float32 &msg);
   void mPitchCallback(const std_msgs::Float32 &msg);
   void yawRefCallback(const std_msgs::Float64 &msg);
