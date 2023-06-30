@@ -1,0 +1,1 @@
+cmd_/home/delfim/VersaAPI_Linux_64b_v1.7.2_ncg/src/vldrive/vldrive.mod := { echo  /home/delfim/VersaAPI_Linux_64b_v1.7.2_ncg/src/vldrive/vldrive.o;  echo; } > /home/delfim/VersaAPI_Linux_64b_v1.7.2_ncg/src/vldrive/vldrive.mod

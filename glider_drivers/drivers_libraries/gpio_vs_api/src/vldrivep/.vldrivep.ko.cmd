@@ -1,0 +1,1 @@
+cmd_/home/delfim/VersaAPI_Linux_64b_v1.7.2_ncg/src/vldrivep/vldrivep.ko := ld -r -m elf_x86_64  -z max-page-size=0x200000  --build-id  -T ./scripts/module-common.lds -o /home/delfim/VersaAPI_Linux_64b_v1.7.2_ncg/src/vldrivep/vldrivep.ko /home/delfim/VersaAPI_Linux_64b_v1.7.2_ncg/src/vldrivep/vldrivep.o /home/delfim/VersaAPI_Linux_64b_v1.7.2_ncg/src/vldrivep/vldrivep.mod.o;  true

@@ -1,0 +1,33 @@
+# usb serial dongle PG
+#SUBSYSTEM=="tty", KERNEL=="ttyACM*", KERNELS=="5-1:1.0", SYMLINK="Thrusters_H"
+
+# Girona Trials
+#SUBSYSTEM=="tty", KERNEL=="ttyACM*", KERNELS=="5-2:1.0", SYMLINK="ThrusterR"
+#SUBSYSTEM=="tty", KERNEL=="ttyACM*", KERNELS=="6-1:1.0", SYMLINK="ThrusterL"
+#SUBSYSTEM=="tty", KERNEL=="ttyACM*", KERNELS=="5-1:1.0", SYMLINK="ThrusterVR"
+#SUBSYSTEM=="tty", KERNEL=="ttyACM*", KERNELS=="7-2:1.0", SYMLINK="ThrusterVL"
+
+#SUBSYSTEM=="tty", KERNEL=="ttyACM*", KERNELS=="7-2:1.0", SYMLINK="ThrusterL"
+#SUBSYSTEM=="tty", KERNEL=="ttyACM*", KERNELS=="5-1:1.0", SYMLINK="ThrusterR"
+#SUBSYSTEM=="tty", KERNEL=="ttyACM*", KERNELS=="6-1:1.0", SYMLINK="ThrusterVR"
+#SUBSYSTEM=="tty", KERNEL=="ttyACM*", KERNELS=="5-2:1.0", SYMLINK="ThrusterVL"
+
+# With USB Hub
+#SUBSYSTEM=="tty", KERNEL=="ttyUSB*", DRIVERS=="ftdi_sio", KERNELS=="2-5.3:1.0", ATTRS{interface}=="FT232R USB UART", SYMLINK="medusa/imu"
+# Whitout USB Hub
+SUBSYSTEM=="tty", KERNEL=="ttyUSB*", DRIVERS=="ftdi_sio", KERNELS=="7-1:1.0", ATTRS{interface}=="FT232R USB UART", SYMLINK="medusa/imu"
+#SUBSYSTEM=="tty", KERNEL=="ttyUSB*", DRIVERS=="pl2303", KERNELS=="3-2:1.0", SYMLINK="MICRON_SONAR"
+SUBSYSTEM=="tty", KERNEL=="ttyUSB*", DRIVERS=="pl2303", KERNELS=="3-2:1.0", SYMLINK="medusa/dvl"
+SUBSYSTEM=="tty", KERNEL=="ttyUSB*", DRIVERS=="ftdi_sio", KERNELS=="5-2:1.0", ATTRS{interface}=="FT232R USB UART", SYMLINK="medusa/bluetooth"
+KERNEL=="ttyS1", SYMLINK+="medusa/gps"
+KERNEL=="ttyS2", SYMLINK+="medusa/altimeter"
+KERNEL=="ttyS3", SYMLINK+="medusa/batmonit"
+KERNEL=="ttyS4", SYMLINK+="medusa/depth_cell"
+# usb dongle PG
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="f4d8", ATTRS{idProduct}=="0001", SYMLINK+="medusa/thrusters_usb", GROUP="dialout", MODE="777"
+# HARD disk
+#ACTION="add", KERNEL=="sd?1", ENV{ID_FS_UUID}=="3a54f8f9-7734-489e-b001-99389034ae66", MODE="0666", SYMLINK="YAYAY"
+#KERNEL=="sd?1", ENV{ID_FS_UUID}=="3a54f8f9-7734-489e-b001-99389034ae66", MODE="0666", SYMLINK="YAYAY"
+#ACTION="remove", KERNEL=="sd?1", ENV{ID_FS_UUID}=="3a54f8f9-7734-489e-b001-99389034ae66", RUN+="/bin/umount %k"
+
+SUBSYSTEM=="tty", KERNEL=="ttyUSB*", DRIVERS=="ftdi_sio", KERNELS=="6-1:1.0", ATTRS{interface}=="USB-RS232 Cable", SYMLINK="medusa/payload"

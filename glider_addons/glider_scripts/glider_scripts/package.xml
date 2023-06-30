@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="2">
+ <name>glider_scripts</name>
+ <version>1.0.0</version>
+ <description>
+ Scripts libraries for glider
+ </description>
+
+ <license>MIT</license>
+
+ <maintainer email="dsor@gmail.com">DSOR Team</maintainer>
+
+ <buildtool_depend>catkin</buildtool_depend>
+
+</package>

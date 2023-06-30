@@ -1,0 +1,6 @@
+PARAMETERS,type,purpose,SUBSCRIBERS,type,purpose,PUBLISHERS,type,purpose,SERVICES,type,purpose
+names,"['upper', 'lower']",Thrusters name,/parallel_port/data,std_msgs::UInt8,Parallel port config,/leaks/upper,std_msgs/Bool,Leak on the upper thruster detected,/leaks/get_loggers,None,None
+address,"[16, 32]",Parallel port Thrusters pins,,,,/thruster_stop,std_msgs/Int8,Cmd to stop all thrusters,/leaks/set_logger_level,None,None
+,,,,,,/leaks/lower,std_msgs/Bool,Leak on the lower thruster detected,,,
+,,,,,,/rosout,rosgraph_msgs/Log,Logging,,,
+,,,,,,/diagnostics,diagnostic_msgs/DiagnosticArray,Diagnostics,,,

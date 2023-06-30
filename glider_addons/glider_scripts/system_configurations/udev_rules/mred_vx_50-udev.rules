@@ -1,0 +1,22 @@
+# Serial ports
+KERNEL=="ttyS1", SYMLINK+="medusa/gps"
+KERNEL=="ttyS2", SYMLINK+="medusa/altimeter"
+KERNEL=="ttyS3", SYMLINK+="medusa/batmonit"
+KERNEL=="ttyS4", SYMLINK+="medusa/depth_cell"
+
+# Thrusters
+# KERNEL=="ttyACM*", KERNELS=="5-2:1.0", SYMLINK+="medusa/thrusterR"
+# KERNEL=="ttyACM*", KERNELS=="5-1:1.0", SYMLINK+="medusa/thrusterVL"
+# KERNEL=="ttyACM*", KERNELS=="6-2:1.0", SYMLINK+="medusa/thrusterVR"
+# KERNEL=="ttyACM*", KERNELS=="6-1:1.0", SYMLINK+="medusa/thrusterL"
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", DRIVERS=="usb", ATTRS{serial}=="00008921", MODE="0666", SYMLINK+="medusa/thrusterR" 
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", DRIVERS=="usb", ATTRS{serial}=="00008927" , MODE="0666", SYMLINK+="medusa/thrusterL" 
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", DRIVERS=="usb", ATTRS{serial}=="00008922" , MODE="0666", SYMLINK+="medusa/thrusterVR" 
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", DRIVERS=="usb", ATTRS{serial}=="00008926" , MODE="0666", SYMLINK+="medusa/thrusterVL" 
+
+# USB ports
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", DRIVERS=="usb", ATTRS{serial}=="A90414BF", MODE="0666", SYMLINK+="medusa/bluetooth"
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", DRIVERS=="usb", ATTRS{serial}=="FTZ8EVCQ", MODE="0666", SYMLINK+="medusa/imu"
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", DRIVERS=="usb", ATTRS{serial}=="FTZ970ZO", MODE="0666", TAG+="uaccess", SYMLINK+="medusa/inside_pressure"
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", DRIVERS=="usb", ATTRS{serial}=="FT0CQ4OG", MODE="0666", SYMLINK+="medusa/payload"
+ 

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Leak medusa -->
+
+  <env name="ROSCONSOLE_FORMAT" value="[${severity}] [${time}]: ${node}: ${message}"/>
+
+  <node pkg="leak" type="leak_node" name="leaks" respawn="false" output="screen">
+	  <!--<rosparam command="load" file="$(find leak)/config/config_leak_medusa.yaml"/>-->
+  </node>
+</launch>

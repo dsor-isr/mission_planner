@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<launch>
+
+    <env name="ROSCONSOLE_FORMAT" value="[${severity}] [${time}]: ${node}: ${message}"/>
+
+    <!-- Parameters and Arguments -->
+    <arg name="name"            /> <!-- Name of the vehicle being launched -->   
+    <arg name="config_package_path"  /> <!-- Name of the package where the configuration files are stored -->
+    <arg name="folder"                      default="simulation" />  <!-- Name of the folder for the configuration files --> 
+    <arg name="namespace"                   default="false" />
+    <arg name="vehicle_id"                  default="0" />
+
+    <arg name="aggregator"                  default="false"  />   
+    <arg name="watchdog"                    default="false"  />   
+  
+    <group ns="glider_addons">
+
+        <!-- Vehicle Specific Config File -->
+        <arg name="dollar" value="$" />
+        <rosparam command="load" file="$(arg dollar)$(arg config_package_path))/config/$(arg folder)/$(arg name)/glider_addons.yaml" />
+
+        <!-- Launch Nodes that are common to all vehicles -->
+        <!-- Acoustic Safety -->
+        <group if="$(arg watchdog)">
+          <!-- Node to handle safeties -->
+          <node pkg="watchdog" type="watchdog_node" name="watchdog" output="screen">
+          </node>
+          <!-- Rosbridge server -->
+          <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+              <arg name="port" value="10111" />
+          </include>
+        </group>
+
+        <!-- Diagnostics aggregator for sensors -->
+        <group if="$(arg aggregator)">
+          <node pkg="diagnostic_aggregator" type="aggregator_node" name="aggregator" output="screen">
+            <remap from="/diagnostics_toplevel_state" to="/$(arg name)$(arg vehicle_id)/diagnostics_toplevel_state"/>  
+            <remap from="/diagnostics" to="/$(arg name)$(arg vehicle_id)/diagnostics"/>
+            <remap from="/diagnostics_agg" to="/$(arg name)$(arg vehicle_id)/diagnostics_agg"/> 
+          </node>
+        </group>
+    </group>
+
+</launch>
+

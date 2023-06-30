@@ -1,0 +1,69 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          bullet
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: bullet switch start
+### END INIT INFO!/bin/sh
+
+# File in /etc/init.d/
+
+internal_ssdon() {
+        parallel_port internal ssdon
+}
+
+internal_ssdoff() {
+        parallel_port internal ssdoff
+}
+
+external_ssdon() {
+        parallel_port external ssdon
+}
+
+external_ssdoff() {
+        parallel_port external ssdoff
+}
+
+start() {
+        internal_ssdoff
+        #external_ssdoff
+}
+
+case "$1" in
+start)
+        start
+        ;;
+
+stop)
+        start
+        ;;
+
+force-reload|restart)
+        start
+        ;;
+
+external_ssdon)
+        external_ssdon
+        ;;
+
+external_ssdoff)
+        external_ssdoff
+        ;;
+
+internal_ssdon)
+        internal_ssdon
+        ;;
+
+internal_ssdoff)
+        internal_ssdoff
+        ;;
+
+*)
+        echo "Usage: /etc/init.d/bullet {start|stop|restart|external_ssd{on,off}|internal_ssd{on,off}}"
+        exit 1
+        ;;
+esac
+
+exit 0
