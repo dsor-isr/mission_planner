@@ -61,3 +61,21 @@ drivers:
                 conf: /#vehicle#/drivers/parallel_port/conf
             publishers:
                 data: /#vehicle#/drivers/parall
+
+## --------------------------- ## 
+#   glider_bsd_interface        #
+## --------------------------- ## 
+
+GliderBsdInterfaceNode:
+    vehicle_name: "#vehicle#"
+    topics:
+        subscribers:
+            m_lat: "/glider/extctl/sensors/m_lat"
+            m_lon: "/glider/extctl/sensors/m_lon"
+            m_depth: "/glider/extctl/sensors/m_depth"
+            m_pitch: "/glider/extctl/sensors/m_pitch"
+            yaw_ref: "/#vehicle#/ref/yaw"
+            surge_ref: "/#vehicle#/ref/surge"
+        publishers:
+            position: "/#vehicle#/measurement/position"
+            # c_depth:
