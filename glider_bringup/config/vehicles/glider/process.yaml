@@ -150,3 +150,12 @@ processes:
             []
       dependencies:
             - load
+
+    - name: 'extctl_serial_driver'
+      launch_on_startup: true
+      delay_before_start: 12.0
+      cmd: 'roslaunch slocum_glider_extctl_serial serial_driver.launch'
+      args:
+            - serial_port_device:= /dev/ttyUSB0
+      dependencies:
+            - load

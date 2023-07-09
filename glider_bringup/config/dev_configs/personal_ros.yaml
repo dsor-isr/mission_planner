@@ -70,10 +70,10 @@ GliderBsdInterfaceNode:
     vehicle_name: "#vehicle#"
     topics:
         subscribers:
-            m_lat: "/glider/extctl/sensors/m_lat"
-            m_lon: "/glider/extctl/sensors/m_lon"
-            m_depth: "/glider/extctl/sensors/m_depth"
-            m_pitch: "/glider/extctl/sensors/m_pitch"
+            m_lat: "/glider0/glider/extctl/sensors/m_lat"
+            m_lon: "/glider0/glider/extctl/sensors/m_lon"
+            m_depth: "/glider0/glider/extctl/sensors/m_depth"
+            m_pitch: "/glider0/glider/extctl/sensors/m_pitch"
             yaw_ref: "/#vehicle#/ref/yaw"
             surge_ref: "/#vehicle#/ref/surge"
         publishers:
