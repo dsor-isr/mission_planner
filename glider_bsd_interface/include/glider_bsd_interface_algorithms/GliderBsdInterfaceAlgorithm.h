@@ -34,10 +34,15 @@ class GliderBsdInterfaceAlgorithm {
 
     void publishPosition(double m_lat, double m_lon, ros::Publisher position_pub, std::string vehicle_name);
 
+    void publishDepth(double m_depth, ros::Publisher position_pub, std::string vehicle_name);
+
   private:
     
     // position message
-    dsor_msgs::Measurement measurement_;
+    dsor_msgs::Measurement measurement_position_;
+
+    // depth message
+    dsor_msgs::Measurement measurement_depth_;
   
 
 };

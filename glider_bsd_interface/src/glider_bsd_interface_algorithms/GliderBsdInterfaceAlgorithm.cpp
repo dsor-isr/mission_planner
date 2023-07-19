@@ -13,8 +13,8 @@ GliderBsdInterfaceAlgorithm::~GliderBsdInterfaceAlgorithm() {
 // publish position after converting lat/lon to UTM
 void GliderBsdInterfaceAlgorithm::publishPosition(double m_lat, double m_lon, ros::Publisher position_pub, std::string vehicle_name) {
   // fill header
-  measurement_.header.stamp = ros::Time::now();
-  measurement_.header.frame_id = vehicle_name + "_gnss";
+  measurement_position_.header.stamp = ros::Time::now();
+  measurement_position_.header.frame_id = vehicle_name + "_gnss";
 
   // compute earthing andf easting from lat and lon
   bool northp;
@@ -31,11 +31,26 @@ void GliderBsdInterfaceAlgorithm::publishPosition(double m_lat, double m_lon, ro
     return;
   }
 
-  measurement_.value = {northing, easting};
+  measurement_position_.value = {northing, easting};
 
   // set noise to 0
-  measurement_.noise = {0.0, 0.0};
+  measurement_position_.noise = {0.0, 0.0};
 
   // publish
-  position_pub.publish(measurement_);
+  position_pub.publish(measurement_position_);
+}
+
+// publish depth
+void GliderBsdInterfaceAlgorithm::publishDepth(double m_depth, ros::Publisher position_pub, std::string vehicle_name) {
+  // fill header
+  measurement_depth_.header.stamp = ros::Time::now();
+  measurement_depth_.header.frame_id = vehicle_name + "_depth";
+
+  measurement_depth_.value = {m_depth};
+
+  // set noise to 0
+  measurement_depth_.noise = {0.0};
+
+  // publish
+  position_pub.publish(measurement_depth_);
 }

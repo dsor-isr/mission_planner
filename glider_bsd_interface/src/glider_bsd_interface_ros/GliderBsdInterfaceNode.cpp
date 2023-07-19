@@ -71,6 +71,7 @@ void GliderBsdInterfaceNode::mEstLonCallback(const std_msgs::Float64 &msg) {
 
 void GliderBsdInterfaceNode::mDepthCallback(const std_msgs::Float32 &msg) {
   m_depth_ = msg.data;
+  glider_bsd_interface_alg_->publishDepth(m_depth_, position_pub_, vehicle_name_);
 }
 
 void GliderBsdInterfaceNode::mPitchCallback(const std_msgs::Float32 &msg) {
