@@ -20,7 +20,7 @@ processes:
       delay_before_start: 4.0
       cmd: 'roslaunch glider_bringup drivers.launch'
       args:
-            - leak_detector:= true
+            - leak_detector:= false
       dependencies:
             - load
     
@@ -66,7 +66,7 @@ processes:
       cmd: 'roslaunch glider_bringup glider_addons.launch'
       args:
             - aggregator:= true
-            - watchdog:= true 
+            - watchdog:= false
       dependencies:
             - drivers
             - navigation
@@ -124,7 +124,7 @@ processes:
       args:
             - dmac:= true
             - data_serializer:= true
-            - pinger:= false
+            - pinger:= true
             - replier:= false
             - pos2sim_modem:= false
             - dmac2farol:= true
@@ -143,7 +143,7 @@ processes:
             - load
 
     - name: 'glider_bsd_interface'
-      launch_on_startup: true
+      launch_on_startup: false
       delay_before_start: 12.0
       cmd: 'roslaunch glider_bsd_interface glider_bsd_interface.launch'
       args:
@@ -152,10 +152,19 @@ processes:
             - load
 
     - name: 'extctl_serial_driver'
-      launch_on_startup: true
-      delay_before_start: 12.0
+      launch_on_startup: false
+      delay_before_start: 15.0
       cmd: 'roslaunch slocum_glider_extctl_serial serial_driver.launch'
       args:
             - serial_port_device:= /dev/ttyUSB0
+      dependencies:
+            - load
+      
+    - name: 'gsniffer'
+      launch_on_startup: true
+      delay_before_start: 18.0
+      cmd: 'roslaunch gsniffer gsniffer.launch'
+      args:
+            []
       dependencies:
             - load
