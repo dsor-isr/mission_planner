@@ -1,25 +1,25 @@
 modem/modem_config:
-    tcp_config/ip: mvectorMF
-    local_address: 3 
+    tcp_config/ip: 192.168.0.150
+    local_address: 150
     hasAHRS: false
     initializer: "{'@ZA': '1', '@ZX': '1'}"
 
 pinger:
     tslack: 1.0
-    modem_name: "mvectorMF"
+    modem_name: "192.168.0.150"
     #modems_list: ["1", "2"]
-    modems_list: ["1", "2"]
+    modems_list: ["2", "2"]
     timeout_list: [4.0, 4.0]
 
 replier:
     tslack: 1.0
-    modem_id: 3
+    modem_id: 150
 
 data_serializer:
-    vehicle_id: 3
+    vehicle_id: 150
 
 pos2sim_modem:
-    ip: mvectorMF
+    ip: 192.168.0.150
 
 dmac2farol:
     # false, vehicle acts as an achor, estimates other vehicles position 
