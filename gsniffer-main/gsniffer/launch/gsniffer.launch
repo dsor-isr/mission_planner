@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="gsniffer" type="gsniffer" name="gsniffer">
+    <rosparam file="$(dirname)/../config/gsniffer.yaml"/>
+  </node>
+</launch>

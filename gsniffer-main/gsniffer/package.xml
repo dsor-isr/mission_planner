@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>gsniffer</name>
+  <version>0.0.1</version>
+  <description>Gamma Sniffer ROS driver based on MCA_COMM</description>
+  <maintainer email="amallios@ploatech.com">Angelos Mallios</maintainer>
+  <author email="amallios@ploatech.com">Angelos Mallios</author>
+  <license>GPL</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>gsniffer_msgs</depend>
+  <depend>libboost-dev</depend>
+  <depend>mca_comm</depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+</package>

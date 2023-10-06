@@ -1,0 +1,8 @@
+high_voltage: 1500
+save_folder: "/home/ubuntu/gsniffer_saves"
+sample_period: 15.0
+
+# Calibration
+calibration_slope: 1.0
+calibration_offset: 0.0
+calibration_square: 0.0
