@@ -2,10 +2,11 @@
 
 # Script to run all ROS aplications
 source /home/ubuntu/.bashrc
-source /home/ubuntu/catkin_ws_real/devel/setup.bash
+source /home/ubuntu/catkin_ws_glider_ramones/devel/setup.bash
 export ROS_BAG_FOLDER=/home/ubuntu
 export ROS_IP=$HOSTNAME
-name=$HOSTNAME
+# name=$HOSTNAME
+# name=glider
 
 
 
@@ -17,4 +18,4 @@ echo "Sync clock with network time protocol "
 #sudo ntpdate -bu ntpServer
 
 echo "Run glider stack"
-roslaunch glider_bringup start_vehicle.launch name:=$name
+roslaunch glider_bringup start_vehicle.launch name:=glider
