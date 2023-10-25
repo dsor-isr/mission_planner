@@ -6,7 +6,7 @@ In the glider's internal Raspberry Pi, create a folder and clone the repo:
 
 ```shell
 mkdir -p ~/catkin_ws_glider_ramones/src
-git clone [repository_link] ~/catkin_ws_glider_ramones/src/.
+git clone --recurse-submodules [repository_link] ~/catkin_ws_glider_ramones/src/.
 ```
 
 To launch the code, simply run:
