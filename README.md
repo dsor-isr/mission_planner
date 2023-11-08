@@ -9,6 +9,13 @@ mkdir -p ~/catkin_ws_glider_ramones/src
 git clone --recurse-submodules [repository_link] ~/catkin_ws_glider_ramones/src/.
 ```
 
+Follow the README at the gsniffer submodule. Remember to give the correct permissions to the installed libraries during the guide before compiling:
+
+```shell
+sudo chmod a+r /usr/local/include/WinTypes.h
+sudo chmod a+r /usr/local/include/ftd2xx.h
+```
+
 To launch the code, simply run:
 
 ```shell
