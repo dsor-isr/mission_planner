@@ -48,8 +48,8 @@ filter:
             -   frame_id:   "gnss"
                 config:     "Hposition"            # [x, y]
                 noise:      [0.001, 0.001]         # if you want to use the noise directly from the sensor, fill the noise with zeros
-                outlier_tolerance: 0.2
-                reject_counter: 8
+                outlier_tolerance: 5.0
+                reject_counter: 3
             -   frame_id:   "usbl"
                 config:     "Hposition"            # [x, y]
                 noise:      [1, 1]
@@ -69,8 +69,8 @@ filter:
             -   frame_id:   "depth" 
                 config:     "Vposition"            # [z]
                 noise:      [0.0002]
-                outlier_tolerance: 0.2
-                reject_counter: 8
+                outlier_tolerance: 5.0
+                reject_counter: 3
             -   frame_id:   "ahrs"  
                 config:     "orientation"          
                 noise:      [0.001, 0.001, 0.001,  # [roll, pitch, yaw]
