@@ -8,9 +8,9 @@
 GliderBsdInterfaceNode::GliderBsdInterfaceNode(ros::NodeHandle *nodehandle, ros::NodeHandle *nodehandle_private):nh_(*nodehandle), nh_private_(*nodehandle_private) {
 
   loadParams();
+  initializeServices();
   initializeSubscribers();
   initializePublishers();
-  initializeServices();
   initializeTimer();
 
   glider_bsd_interface_alg_ = std::make_unique<GliderBsdInterfaceAlgorithm>();
@@ -28,9 +28,14 @@ GliderBsdInterfaceNode::~GliderBsdInterfaceNode() {
   m_gps_lat_sub_.shutdown();  
   m_gps_lon_sub_.shutdown();  
   m_depth_sub_.shutdown();
+  m_roll_sub_.shutdown();
   m_pitch_sub_.shutdown();
+  m_heading_sub_.shutdown();
   yaw_ref_sub_.shutdown();
   surge_ref_sub_.shutdown();
+
+  // shutdown services
+  set_heading_ref_client_.shutdown();
 
   // +.+ stop timer
   timer_.stop();
@@ -49,23 +54,35 @@ void GliderBsdInterfaceNode::loadParams() {
 
 }
 
+double GliderBsdInterfaceNode::convertGliderToStackAngleFormat(double angle) {
+  // compute degrees, minutes, seconds from glider format for LAT/LON
+  double degrees = floor(abs(angle)/100);
+  double minutes = floor(abs(angle) - degrees*100);
+  double seconds = (abs(angle) - degrees*100 - minutes)*100;
+
+  ROS_WARN("CONVERSION: %f -> %f", angle, DSOR::sign(angle)*(degrees + minutes/60 + seconds/3600));
+
+  // return angle in degrees
+  return DSOR::sign(angle)*(degrees + minutes/60 + seconds/3600);
+}
+
 void GliderBsdInterfaceNode::mGpsLatCallback(const std_msgs::Float64 &msg) {
-  m_gps_lat_ = msg.data / 100;
+  m_gps_lat_ = convertGliderToStackAngleFormat(msg.data);
   gps_lat_received_ = true;
 }
 
 void GliderBsdInterfaceNode::mGpsLonCallback(const std_msgs::Float64 &msg) {
-  m_gps_lon_ = msg.data / 100;
+  m_gps_lon_ = convertGliderToStackAngleFormat(msg.data);
   gps_lon_received_ = true;
 }
 
 void GliderBsdInterfaceNode::mEstLatCallback(const std_msgs::Float64 &msg) {
-  m_est_lat_ = msg.data / 100;
+  m_est_lat_ = convertGliderToStackAngleFormat(msg.data);
   est_lat_received_ = true;
 }
 
 void GliderBsdInterfaceNode::mEstLonCallback(const std_msgs::Float64 &msg) {
-  m_est_lon_ = msg.data / 100;
+  m_est_lon_ = convertGliderToStackAngleFormat(msg.data);
   est_lon_received_ = true;
 }
 
@@ -74,12 +91,24 @@ void GliderBsdInterfaceNode::mDepthCallback(const std_msgs::Float32 &msg) {
   glider_bsd_interface_alg_->publishDepth(m_depth_, position_pub_, vehicle_name_);
 }
 
+void GliderBsdInterfaceNode::mRollCallback(const std_msgs::Float32 &msg) {
+  m_roll_ = msg.data;
+  orientation_received_ = true;
+}
+
 void GliderBsdInterfaceNode::mPitchCallback(const std_msgs::Float32 &msg) {
   m_pitch_ = msg.data;
+  orientation_received_ = true;
+}
+
+void GliderBsdInterfaceNode::mHeadingCallback(const std_msgs::Float32 &msg) {
+  m_heading_ = msg.data;
+  orientation_received_ = true;
 }
 
 void GliderBsdInterfaceNode::yawRefCallback(const std_msgs::Float64 &msg) {
   yaw_ref_ = msg.data;
+  glider_bsd_interface_alg_->callHeadingService(yaw_ref_, set_heading_ref_client_);
 }
 
 void GliderBsdInterfaceNode::surgeRefCallback(const std_msgs::Float64 &msg) {
@@ -112,9 +141,17 @@ void GliderBsdInterfaceNode::initializeSubscribers() {
     "topics/subscribers/m_depth", "dummy"),
     10, &GliderBsdInterfaceNode::mDepthCallback, this);
 
+  m_roll_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
+    "topics/subscribers/m_roll", "dummy"),
+    10, &GliderBsdInterfaceNode::mRollCallback, this);
+  
   m_pitch_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
     "topics/subscribers/m_pitch", "dummy"),
     10, &GliderBsdInterfaceNode::mPitchCallback, this);
+
+  m_heading_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
+    "topics/subscribers/m_heading", "dummy"),
+    10, &GliderBsdInterfaceNode::mHeadingCallback, this);
 
   // control references
 
@@ -137,6 +174,11 @@ void GliderBsdInterfaceNode::initializePublishers() {
       FarolGimmicks::getParameters<std::string>(
           nh_private_, "topics/publishers/position", "dummy"), 1);
 
+  // measurement orientation for navigation filter
+  orientation_pub_ = nh_private_.advertise<dsor_msgs::Measurement>(
+      FarolGimmicks::getParameters<std::string>(
+          nh_private_, "topics/publishers/orientation", "dummy"), 1);
+
 }
 
 
@@ -144,6 +186,10 @@ void GliderBsdInterfaceNode::initializePublishers() {
 void GliderBsdInterfaceNode::initializeServices() {
   ROS_INFO("Initializing Services for GliderBsdInterfaceNode");
 
+  std::string heading_ref_service_topic = FarolGimmicks::getParameters<std::string>(
+                    nh_private_, "topics/services/set_heading_ref", "dummy");
+
+  set_heading_ref_client_ = nh_private_.serviceClient<slocum_glider_msgs::SetFloat32>(heading_ref_service_topic);
 }
 
 
@@ -161,6 +207,11 @@ void GliderBsdInterfaceNode::timerIterCallback(const ros::TimerEvent &event) {
     
     est_lat_received_ = false;
     est_lon_received_ = false;
+  }
+
+  if (m_roll_ != 999 && m_pitch_ != 999 && m_heading_ != 999) {
+    glider_bsd_interface_alg_->publishOrientation(m_roll_, m_pitch_, m_heading_, orientation_pub_, vehicle_name_);
+    orientation_received_ = false;
   }
 
 }

@@ -8,9 +8,13 @@ find_package(catkin
  dsor_msgs 
  farol_msgs
  roscpp
+ dsor_utils
 
  # farol_gimmicks_library
  farol_gimmicks_library
+
+ # slocum glider extctl package
+ slocum_glider_msgs
 )
 
 find_package(GeographicLib REQUIRED)

@@ -143,8 +143,8 @@ processes:
             - load
 
     - name: 'glider_bsd_interface'
-      launch_on_startup: false
-      delay_before_start: 12.0
+      launch_on_startup: true
+      delay_before_start: 10.0
       cmd: 'roslaunch glider_bsd_interface glider_bsd_interface.launch'
       args:
             []
@@ -152,8 +152,8 @@ processes:
             - load
 
     - name: 'extctl_serial_driver'
-      launch_on_startup: false
-      delay_before_start: 15.0
+      launch_on_startup: true
+      delay_before_start: 10.0
       cmd: 'roslaunch slocum_glider_extctl_serial serial_driver.launch'
       args:
             - serial_port_device:= /dev/ttyUSB0
@@ -162,7 +162,7 @@ processes:
       
     - name: 'gsniffer'
       launch_on_startup: true
-      delay_before_start: 18.0
+      delay_before_start: 15.0
       cmd: 'roslaunch gsniffer gsniffer.launch'
       args:
             []

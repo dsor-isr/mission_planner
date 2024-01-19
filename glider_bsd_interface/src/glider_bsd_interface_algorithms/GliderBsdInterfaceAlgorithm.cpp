@@ -54,3 +54,29 @@ void GliderBsdInterfaceAlgorithm::publishDepth(double m_depth, ros::Publisher po
   // publish
   position_pub.publish(measurement_depth_);
 }
+
+// publish depth
+void GliderBsdInterfaceAlgorithm::publishOrientation(double m_roll, double m_pitch, double m_heading, ros::Publisher orientation_pub, std::string vehicle_name) {
+  // fill header
+  measurement_orientation_.header.stamp = ros::Time::now();
+  measurement_orientation_.header.frame_id = vehicle_name + "_ahrs";
+
+  measurement_orientation_.value = {m_roll, m_pitch, m_heading,
+                                    0.0, 0.0, 0.0}; // should be NAN, but filter does not like it
+
+  // set noise to 0.001
+  measurement_orientation_.noise = {0.001, 0.001, 0.001,
+                                    0.001, 0.001, 0.001};
+
+  // publish
+  orientation_pub.publish(measurement_orientation_);
+}
+
+// call service to change heading reference
+void GliderBsdInterfaceAlgorithm::callHeadingService(double yaw_ref, ros::ServiceClient set_heading_ref_client) {
+  
+  /* Call the service to set heading reference */
+  slocum_glider_msgs::SetFloat32 srv;
+  srv.request.data = yaw_ref* FarolGimmicks::PI / 180;
+  set_heading_ref_client.call(srv);
+}

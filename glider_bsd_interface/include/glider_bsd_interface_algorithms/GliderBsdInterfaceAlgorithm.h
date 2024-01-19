@@ -10,6 +10,10 @@
 #include <ros/ros.h>
 
 #include <GeographicLib/UTMUPS.hpp>
+#include <farol_gimmicks_library/FarolGimmicks.h>
+
+/* Required to call the path services*/
+#include "slocum_glider_msgs/SetFloat32.h"
 
 
 class GliderBsdInterfaceAlgorithm {
@@ -36,6 +40,10 @@ class GliderBsdInterfaceAlgorithm {
 
     void publishDepth(double m_depth, ros::Publisher position_pub, std::string vehicle_name);
 
+    void publishOrientation(double m_roll, double m_pitch, double m_heading, ros::Publisher orientation_pub, std::string vehicle_name);
+
+    void callHeadingService(double yaw_ref, ros::ServiceClient set_heading_ref_client);
+
   private:
     
     // position message
@@ -43,6 +51,9 @@ class GliderBsdInterfaceAlgorithm {
 
     // depth message
     dsor_msgs::Measurement measurement_depth_;
+
+    // orientation message
+    dsor_msgs::Measurement measurement_orientation_;
   
 
 };

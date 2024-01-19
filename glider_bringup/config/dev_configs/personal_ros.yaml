@@ -70,14 +70,19 @@ GliderBsdInterfaceNode:
     vehicle_name: "#vehicle#"
     topics:
         subscribers:
-            m_gps_lat: "/glider0/glider/extctl/sensors/m_gps_lat"
-            m_gps_lon: "/glider0/glider/extctl/sensors/m_gps_lon"
-            m_est_lat: "/glider0/glider/extctl/sensors/m_lat"
-            m_est_lon: "/glider0/glider/extctl/sensors/m_lon"
-            m_depth: "/glider0/glider/extctl/sensors/m_depth"
-            m_pitch: "/glider0/glider/extctl/sensors/m_pitch"
+            m_gps_lat: "/#vehicle#/extctl/sensors/m_gps_lat"
+            m_gps_lon: "/#vehicle#/extctl/sensors/m_gps_lon"
+            m_est_lat: "/#vehicle#/extctl/sensors/m_lat"
+            m_est_lon: "/#vehicle#/extctl/sensors/m_lon"
+            m_depth: "/#vehicle#/extctl/sensors/m_depth"
+            m_roll: "/#vehicle#/extctl/sensors/m_roll"
+            m_pitch: "/#vehicle#/extctl/sensors/m_pitch"
+            m_heading: "/#vehicle#/extctl/sensors/m_heading"
             yaw_ref: "/#vehicle#/ref/yaw"
             surge_ref: "/#vehicle#/ref/surge"
         publishers:
             position: "/#vehicle#/measurement/position"
+            orientation: "/#vehicle#/measurement/orientation"
             # c_depth:
+        services:
+            set_heading_ref: "/#vehicle#/extctl/sensors/set_u_mission_param_c"

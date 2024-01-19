@@ -10,13 +10,18 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
  #include <std_msgs/Float32.h>
  #include <dsor_msgs/Measurement.h>
  #include <vector>
- #include <ros/ros.h> 
+ #include <ros/ros.h>
+ #include <cmath>
 
  #include <farol_gimmicks_library/FarolGimmicks.h>
+ #include "dsor_utils/math.hpp"
 
  #include <GeographicLib/UTMUPS.hpp>
 
  #include "GliderBsdInterfaceAlgorithm.h"
+
+ /* Required to call the path services*/
+ #include "slocum_glider_msgs/SetFloat32.h"
 
 /* -------------------------------------------------------------------------*/
 /**
@@ -61,7 +66,9 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   ros::Subscriber m_est_lat_sub_;
   ros::Subscriber m_est_lon_sub_;
   ros::Subscriber m_depth_sub_;
+  ros::Subscriber m_roll_sub_;
   ros::Subscriber m_pitch_sub_;
+  ros::Subscriber m_heading_sub_;
 
   // control references
   ros::Subscriber yaw_ref_sub_;
@@ -69,6 +76,10 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
 
  	// @.@ Publishers
   ros::Publisher position_pub_;
+  ros::Publisher orientation_pub_;
+
+  // Services
+  ros::ServiceClient set_heading_ref_client_;
 
  	// @.@ Timer
  	ros::Timer timer_;           ///< ROS Timer
@@ -85,7 +96,9 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   double m_est_lat_ = 0.0;
   double m_est_lon_ = 0.0;
   double m_depth_;
-  double m_pitch_;
+  double m_roll_ = 999;
+  double m_pitch_ = 999;
+  double m_heading_ = 999;
 
   // control references
   double yaw_ref_;
@@ -96,6 +109,9 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   bool est_lon_received_ = false;
   bool gps_lat_received_ = false;
   bool gps_lon_received_ = false;
+
+  // make sure a new orientation was received to publish
+  bool orientation_received_ = false;
 
   // algorithm instance
   std::unique_ptr<GliderBsdInterfaceAlgorithm> glider_bsd_interface_alg_;
@@ -153,7 +169,9 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   void mEstLatCallback(const std_msgs::Float64 &msg);
   void mEstLonCallback(const std_msgs::Float64 &msg);
   void mDepthCallback(const std_msgs::Float32 &msg);
+  void mRollCallback(const std_msgs::Float32 &msg);
   void mPitchCallback(const std_msgs::Float32 &msg);
+  void mHeadingCallback(const std_msgs::Float32 &msg);
   void yawRefCallback(const std_msgs::Float64 &msg);
   void surgeRefCallback(const std_msgs::Float64 &msg);
   
@@ -175,6 +193,17 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
 
   // @.@ Member helper functions
 
+  /* -------------------------------------------------------------------------*/
+  /**
+   * @brief  Converts lat/lon measurements from the glider into the correct
+   *         format used in the stack.
+   *         Glider format: 3845.571 -> 38º45'57.1''
+   *         Stack format:  38.765852 -> 38.765852º
+   *
+   * @Param event
+   */
+  /* -------------------------------------------------------------------------*/
+  double convertGliderToStackAngleFormat(double angle);
 
 };
 #endif //CATKIN_WS_CONTROLNODE_H
