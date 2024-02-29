@@ -104,7 +104,7 @@ processes:
             - load
     
     - name: 'cooperative' # Set to true to enable cooperative missions
-      launch_on_startup: false
+      launch_on_startup: true
       delay_before_start: 7.0
       cmd: 'roslaunch farol_bringup cooperative.launch'
       args:
@@ -124,8 +124,8 @@ processes:
       args:
             - dmac:= true
             - data_serializer:= true
-            - pinger:= true
-            - replier:= false
+            - pinger:= false
+            - replier:= true
             - pos2sim_modem:= false
             - dmac2farol:= true
             - gnss2state:= true

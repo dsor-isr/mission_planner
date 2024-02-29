@@ -78,6 +78,7 @@ GliderBsdInterfaceNode:
             m_roll: "/#vehicle#/extctl/sensors/m_roll"
             m_pitch: "/#vehicle#/extctl/sensors/m_pitch"
             m_heading: "/#vehicle#/extctl/sensors/m_heading"
+            m_heading_rate: "/#vehicle#/extctl/sensors/m_hdg_rate"
             yaw_ref: "/#vehicle#/ref/yaw"
             surge_ref: "/#vehicle#/ref/surge"
         publishers:

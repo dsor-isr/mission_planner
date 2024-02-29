@@ -60,7 +60,7 @@ double GliderBsdInterfaceNode::convertGliderToStackAngleFormat(double angle) {
   double minutes = floor(abs(angle) - degrees*100);
   double seconds = (abs(angle) - degrees*100 - minutes)*100;
 
-  ROS_WARN("CONVERSION: %f -> %f", angle, DSOR::sign(angle)*(degrees + minutes/60 + seconds/3600));
+  // ROS_WARN("CONVERSION: %f -> %f", angle, DSOR::sign(angle)*(degrees + minutes/60 + seconds/3600));
 
   // return angle in degrees
   return DSOR::sign(angle)*(degrees + minutes/60 + seconds/3600);
