@@ -157,7 +157,16 @@ processes:
       delay_before_start: 10.0
       cmd: 'roslaunch slocum_glider_extctl_serial serial_driver.launch'
       args:
-            - serial_port_device:= /dev/ttyUSB0
+            - serial_port_device:= /dev/ttyUSB0 # /dev/glider/bsd
+      dependencies:
+            - load
+
+    - name: 'glider_mission_planner'
+      launch_on_startup: true
+      delay_before_start: 10.0
+      cmd: 'roslaunch glider_mission_planner glider_mission_planner.launch'
+      args:
+            []
       dependencies:
             - load
       

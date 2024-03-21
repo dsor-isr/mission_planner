@@ -87,3 +87,11 @@ GliderBsdInterfaceNode:
             # c_depth:
         services:
             set_heading_ref: "/#vehicle#/extctl/sensors/set_u_mission_param_c"
+
+GliderMissionPlannerNode:
+    topics:
+        subscribers:
+            state: "/#vehicle#/nav/filter/state"
+        services:
+            interest_zone: "/#vehicle#/mission_planner/interest_zone"
+            change_configs: "/#vehicle#/mission_planner/change_configurations"

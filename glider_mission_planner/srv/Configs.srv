@@ -1,0 +1,8 @@
+uint8 path_orientation
+string path_type
+float64 min_turning_radius
+float64 path_speed
+float64 resolution
+---
+bool success
+string message

@@ -1,0 +1,6 @@
+node_frequency: 10
+path_orientation: 0 # 0 - EAST/WEST, 1 - NORTH/SOUTH
+path_type: "lawnmower_normal" # lawnmower_normal, lawnmower_encircling
+min_turning_radius: 50
+path_speed: 0.7
+resolution: 20 # if path_type = lawnmower_encircling, resolution is the distance between the lawnmower's legs
