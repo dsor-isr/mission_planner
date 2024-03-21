@@ -135,12 +135,6 @@ std::string GliderMissionPlannerAlgorithm::getPathSections(double north_min, dou
                                      normal_radius, big_radius,
                                      is_first_line, is_last_line, path_orientation);
 
-      std::cout << "LENGTH: " + std::to_string(line_length) + "\n";
-
-      // if (is_last_line) {
-      //   line_length += min_turn_radius;
-      // }
-
       if (path_orientation == 0) { // E-W lawnmower
         path_sections_string += "LINE " + std::to_string(path_pos[0]) + " " + std::to_string(path_pos[1]) + " " 
                                         + std::to_string(path_pos[0] + line_direction * line_length) + " " + std::to_string(path_pos[1]) + " "
