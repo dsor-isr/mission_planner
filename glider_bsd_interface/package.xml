@@ -16,5 +16,6 @@
  <!-- Add here ROS dependencies -->
  <depend>roscpp</depend>
  <depend>farol_msgs</depend>
+ <depend>slocum_glider_msgs</depend>
 
 </package>
