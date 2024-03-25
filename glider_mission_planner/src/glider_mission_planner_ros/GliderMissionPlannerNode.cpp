@@ -15,8 +15,6 @@ GliderMissionPlannerNode::GliderMissionPlannerNode(ros::NodeHandle *nodehandle, 
 
   glider_mission_planner_alg_ = std::make_unique<GliderMissionPlannerAlgorithm>();
 
-  // std::vector<double> veh_pos = {-1.0 + 492140, -1.0 + 4290440}; 
-  // glider_mission_planner_alg_->startNewMission(4290440,4291100,492140,493020,path_orientation_,veh_pos,min_turning_radius_,path_type_,path_speed_);
 }
 
 // @.@ Destructor
@@ -26,9 +24,8 @@ GliderMissionPlannerNode::~GliderMissionPlannerNode() {
   mission_string_pub_.shutdown();
 
   // +.+ shutdown subscribers
-  interest_zone_sub_.shutdown();
   state_sub_.shutdown();
-
+  interest_zone_acomms_sub_.shutdown();
 
   // +.+ stop timer
   timer_.stop();
@@ -75,6 +72,30 @@ void GliderMissionPlannerNode::stateCallback(const auv_msgs::NavigationStatus &m
   veh_pos_[1] = msg.position.north;
 }
 
+void GliderMissionPlannerNode::interestZoneAcommsCallback(const glider_mission_planner::mInterestZone &msg) {
+  // ack msg
+  std_msgs::Bool ack_msg;
+  
+  // check if max min values are correct
+  if (msg.northing_min > msg.northing_max || msg.easting_min > msg.easting_max) { // not good
+    // send acoustic message back saying PF HAS NOT started
+    // send FALSE
+    ack_msg.data = false;
+
+  } else { // everything ok, let's start PF
+    // start new mission according to zone of interest published
+    glider_mission_planner_alg_->startNewMission(msg.northing_min, msg.northing_max, msg.easting_min, msg.easting_max, 
+                                                path_orientation_, veh_pos_, min_turning_radius_, resolution_,
+                                                path_type_, path_speed_, mission_string_pub_);
+    
+    // send acoustic message back saying PF HAS started
+    // send TRUE
+    ack_msg.data = true;
+  }
+
+  mission_started_ack_pub_.publish(ack_msg);
+}
+
 bool GliderMissionPlannerNode::changeConfigsService(glider_mission_planner::Configs::Request &req,
                                                     glider_mission_planner::Configs::Response &res) {
   // check if new configs are OK (within acceptable values)
@@ -110,6 +131,11 @@ void GliderMissionPlannerNode::initializeSubscribers() {
   state_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
     "topics/subscribers/state", "dummy"),
     10, &GliderMissionPlannerNode::stateCallback, this);
+
+  // subscribe to the interest zone that comes via acoustic comms
+  interest_zone_acomms_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
+    "topics/subscribers/interest_zone_acomms", "dummy"),
+    10, &GliderMissionPlannerNode::interestZoneAcommsCallback, this);
 }
 
 
@@ -121,6 +147,10 @@ void GliderMissionPlannerNode::initializePublishers() {
   mission_string_pub_ = nh_private_.advertise<std_msgs::String>(
       FarolGimmicks::getParameters<std::string>(
           nh_private_, "topics/publishers/Mission_String", "dummy"), 1);
+
+  mission_started_ack_pub_ = nh_private_.advertise<std_msgs::Bool>(
+      FarolGimmicks::getParameters<std::string>(
+          nh_private_, "topics/publishers/mission_started_ack", "dummy"), 1);
 }
 
 
@@ -128,6 +158,7 @@ void GliderMissionPlannerNode::initializePublishers() {
 void GliderMissionPlannerNode::initializeServices() {
   ROS_INFO("Initializing Services for GliderMissionPlannerNode");
 
+  // servers
   interest_zone_srv_ = nh_.advertiseService(FarolGimmicks::getParameters<std::string>(nh_private_, 
     "topics/services/interest_zone", "dummy"), &GliderMissionPlannerNode::interestZoneService, this);
   

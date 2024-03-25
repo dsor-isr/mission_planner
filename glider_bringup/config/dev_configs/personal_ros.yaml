@@ -92,8 +92,10 @@ GliderMissionPlannerNode:
     topics:
         subscribers:
             state: "/#vehicle#/nav/filter/state"
+            interest_zone_acomms: "/#vehicle#/acomms/interest_zone"
         publishers:
             Mission_String: "/#vehicle#/addons/Mission_String"
+            mission_started_ack: "/#vehicle#/mission_planner/mission_start_ack"
         services:
             interest_zone: "/#vehicle#/mission_planner/interest_zone"
             change_configs: "/#vehicle#/mission_planner/change_configurations"

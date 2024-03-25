@@ -6,8 +6,12 @@
 ## Subscribers
 
 - /#vehicle#/nav/filter/state [auv_msgs/NavigationStatus]
+- "/#vehicle#/acomms/interest_zone" [glider_mission_planner/mInterestZone]
 
 ## Publishers
+
+- "/#vehicle#/addons/Mission_String"
+- "/#vehicle#/mission_planner/mission_start_ack"
 
 ## Services
 

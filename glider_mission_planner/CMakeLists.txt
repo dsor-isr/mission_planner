@@ -15,10 +15,10 @@ find_package(catkin
  farol_gimmicks_library
 )
 
-## Generate messages in the 'msg' folder
-# add_message_files(
-# 	DIRECTORY msg
-# )
+# Generate messages in the 'msg' folder
+add_message_files(
+	DIRECTORY msg
+)
 
 add_service_files(
   FILES

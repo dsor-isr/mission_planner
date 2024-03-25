@@ -6,15 +6,17 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
 
  //some generically useful stuff to include...
  #include <std_msgs/String.h>
+ #include <std_msgs/Bool.h>
  #include <vector>
  #include <ros/ros.h> 
 
  #include <farol_gimmicks_library/FarolGimmicks.h>
 
  #include "GliderMissionPlannerAlgorithm.h"
-
- #include "glider_mission_planner/InterestZone.h"
- #include "glider_mission_planner/Configs.h"
+ 
+ #include "glider_mission_planner/mInterestZone.h" // message
+ #include "glider_mission_planner/InterestZone.h" // service
+ #include "glider_mission_planner/Configs.h" // service
  #include "auv_msgs/NavigationStatus.h"
 
 /* -------------------------------------------------------------------------*/
@@ -56,13 +58,13 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   std::unique_ptr<GliderMissionPlannerAlgorithm> glider_mission_planner_alg_;
 
  	// @.@ Subscribers
-  ros::Subscriber interest_zone_sub_;
   ros::Subscriber state_sub_;
-  ros::Subscriber change_configs_sub_;
+  ros::Subscriber interest_zone_acomms_sub_;
 
 
  	// @.@ Publishers
   ros::Publisher mission_string_pub_;
+  ros::Publisher mission_started_ack_pub_;
 
  	// @.@ Timer
  	ros::Timer timer_;           ///< ROS Timer
@@ -128,6 +130,7 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   // @.@ Callbacks declaration
 
   void stateCallback(const auv_msgs::NavigationStatus &msg);
+  void interestZoneAcommsCallback(const glider_mission_planner::mInterestZone &msg);
   
 
   /* -------------------------------------------------------------------------*/
