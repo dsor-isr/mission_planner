@@ -31,7 +31,7 @@ class GliderMissionPlannerAlgorithm {
     void startNewMission(double north_min, double north_max, double east_min, double east_max,
                          int path_orientation, std::vector<double> vehicle_pos,
                          double min_turn_radius, double resolution, 
-                         std::string path_type, double velocity);
+                         std::string path_type, double velocity, ros::Publisher mission_string_pub);
 
   private:
 

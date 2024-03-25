@@ -229,14 +229,20 @@ std::string GliderMissionPlannerAlgorithm::getNewMissionString(double north_min,
 void GliderMissionPlannerAlgorithm::startNewMission(double north_min, double north_max, double east_min, double east_max,
                                                     int path_orientation, std::vector<double> vehicle_pos,
                                                     double min_turn_radius, double resolution,
-                                                    std::string path_type, double velocity) {
+                                                    std::string path_type, double velocity, ros::Publisher mission_string_pub) {
   // get mission string
   mission_string_ = getNewMissionString(north_min, north_max, east_min, east_max,
                                         path_orientation, vehicle_pos,
                                         min_turn_radius, resolution, 
                                         path_type, velocity);
 
-  // call service to start new PF
   ROS_INFO("\nMISSION FILE:\n");
   std::cout << mission_string_;
+
+  std_msgs::String new_mission;
+  new_mission.data = mission_string_;
+
+  // publish new mission string to start new PF
+  mission_string_pub.publish(new_mission);
+
 }

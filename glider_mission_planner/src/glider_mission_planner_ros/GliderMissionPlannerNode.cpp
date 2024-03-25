@@ -23,7 +23,7 @@ GliderMissionPlannerNode::GliderMissionPlannerNode(ros::NodeHandle *nodehandle, 
 GliderMissionPlannerNode::~GliderMissionPlannerNode() {
 
   // +.+ shutdown publishers
-
+  mission_string_pub_.shutdown();
 
   // +.+ shutdown subscribers
   interest_zone_sub_.shutdown();
@@ -63,7 +63,7 @@ bool GliderMissionPlannerNode::interestZoneService(glider_mission_planner::Inter
   // start new mission according to zone of interest published
   glider_mission_planner_alg_->startNewMission(req.northing_min, req.northing_max, req.easting_min, req.easting_max, 
                                                path_orientation_, veh_pos_, min_turning_radius_, resolution_,
-                                               path_type_, path_speed_);
+                                               path_type_, path_speed_, mission_string_pub_);
   res.success = true;
   res.message = "Started new PF Mission on interest zone.";
   return true;
@@ -117,6 +117,10 @@ void GliderMissionPlannerNode::initializeSubscribers() {
 void GliderMissionPlannerNode::initializePublishers() {
   ROS_INFO("Initializing Publishers for GliderMissionPlannerNode");
 
+  // publisher for the new mission string
+  mission_string_pub_ = nh_private_.advertise<std_msgs::String>(
+      FarolGimmicks::getParameters<std::string>(
+          nh_private_, "topics/publishers/Mission_String", "dummy"), 1);
 }
 
 

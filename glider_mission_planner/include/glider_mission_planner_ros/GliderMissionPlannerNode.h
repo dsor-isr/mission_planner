@@ -62,7 +62,7 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
 
 
  	// @.@ Publishers
-
+  ros::Publisher mission_string_pub_;
 
  	// @.@ Timer
  	ros::Timer timer_;           ///< ROS Timer
