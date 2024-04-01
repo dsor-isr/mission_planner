@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # RAMONES Glider (glider-ramones repo)
 Repository for glider missions in the scope of the Ramones Project
 
@@ -23,3 +24,7 @@ roslaunch glider_bringup start_vehicle.launch
 ```
 
 Always remember to check which processes are being launched, in the file `~/catkin_ws_glider_ramones/src/glider_bringup/config/vehicles/glider/process.yaml`.
+=======
+# mission_planner
+Repository for creation and maintenance of Path Following missions via acoustic communications.
+>>>>>>> 13256eb0a834756804b5753c1eb961cb62224267
