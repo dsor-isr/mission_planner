@@ -1,4 +1,0 @@
-
-#  Always lower-case names
-names: ["upper","lower"]
-address: [16,32]
