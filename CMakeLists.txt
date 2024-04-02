@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.0)
-project(glider_mission_planner)
+project(mission_planner)
 
 find_package(catkin
  # ROS components
@@ -39,11 +39,11 @@ catkin_package(
 add_compile_options(-std=c++17 -Wall -O3) 
 
 include_directories(
- include/glider_mission_planner_ros
- include/glider_mission_planner_algorithms
+ include/mission_planner_ros
+ include/mission_planner_algorithms
  ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(${PROJECT_NAME}_node src/glider_mission_planner_ros/GliderMissionPlannerNode.cpp src/glider_mission_planner_algorithms/GliderMissionPlannerAlgorithm.cpp)
+add_executable(${PROJECT_NAME}_node src/mission_planner_ros/MissionPlannerNode.cpp src/mission_planner_algorithms/MissionPlannerAlgorithm.cpp)
 add_dependencies(${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}_node ${catkin_LIBRARIES})

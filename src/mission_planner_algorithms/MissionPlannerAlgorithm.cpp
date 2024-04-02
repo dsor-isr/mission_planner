@@ -1,17 +1,17 @@
-#include "GliderMissionPlannerAlgorithm.h"
+#include "MissionPlannerAlgorithm.h"
 
 // @.@ Constructor
-GliderMissionPlannerAlgorithm::GliderMissionPlannerAlgorithm() {
+MissionPlannerAlgorithm::MissionPlannerAlgorithm() {
   mission_start_ = "3\n";
 
 }
 
 // @.@ Destructor
-GliderMissionPlannerAlgorithm::~GliderMissionPlannerAlgorithm() {
+MissionPlannerAlgorithm::~MissionPlannerAlgorithm() {
 
 }
 
-bool GliderMissionPlannerAlgorithm::insideInterestZone(std::vector<double> path_pos, double north_min, double north_max, 
+bool MissionPlannerAlgorithm::insideInterestZone(std::vector<double> path_pos, double north_min, double north_max, 
                                                        double east_min, double east_max) {
   if (path_pos[0] >= east_min && path_pos[0] <= east_max && path_pos[1] >= north_min && path_pos[1] <= north_max) {
     return true;
@@ -20,7 +20,7 @@ bool GliderMissionPlannerAlgorithm::insideInterestZone(std::vector<double> path_
   return false;
 }
 
-int GliderMissionPlannerAlgorithm::getInitialArcDirection(std::vector<double> initial_path_pos, double north_min, 
+int MissionPlannerAlgorithm::getInitialArcDirection(std::vector<double> initial_path_pos, double north_min, 
                                                           double north_max, double east_min, double east_max,
                                                           int path_orientation) {
   // determine what's the arc direction for the first turn
@@ -34,7 +34,7 @@ int GliderMissionPlannerAlgorithm::getInitialArcDirection(std::vector<double> in
   return (path_orientation == 0) ? -1 : 1;
 }
 
-int GliderMissionPlannerAlgorithm::getInitialLineDirection(std::vector<double> initial_path_pos, double north_min, 
+int MissionPlannerAlgorithm::getInitialLineDirection(std::vector<double> initial_path_pos, double north_min, 
                                                            double north_max, double east_min, double east_max,
                                                            int path_orientation) {
   // determine what's the line direction initially
@@ -47,7 +47,7 @@ int GliderMissionPlannerAlgorithm::getInitialLineDirection(std::vector<double> i
   }
 }
 
-int GliderMissionPlannerAlgorithm::getProgressionSign(std::vector<double> initial_path_pos, double north_min, 
+int MissionPlannerAlgorithm::getProgressionSign(std::vector<double> initial_path_pos, double north_min, 
                                                       double north_max, double east_min, double east_max,
                                                       int path_orientation) {
   // determine the sign of progression along the zone of intereset
@@ -58,7 +58,7 @@ int GliderMissionPlannerAlgorithm::getProgressionSign(std::vector<double> initia
   }
 }
 
-double GliderMissionPlannerAlgorithm::updateCurrentRadius(int initial_line_direction, int line_direction, double normal_radius, 
+double MissionPlannerAlgorithm::updateCurrentRadius(int initial_line_direction, int line_direction, double normal_radius, 
                                                           double big_radius, std::string path_type) {
   if (path_type == "lawnmower_normal") { // radius is always the min_turn_radius
     return normal_radius;
@@ -69,7 +69,7 @@ double GliderMissionPlannerAlgorithm::updateCurrentRadius(int initial_line_direc
   }
 }
 
-double GliderMissionPlannerAlgorithm::updateLineLength(double north_min, double north_max, double east_min, double east_max, 
+double MissionPlannerAlgorithm::updateLineLength(double north_min, double north_max, double east_min, double east_max, 
                                                        int initial_line_direction, int line_direction, 
                                                        double normal_radius, double big_radius,
                                                        bool is_first_line, bool is_last_line, int path_orientation) {
@@ -85,7 +85,7 @@ double GliderMissionPlannerAlgorithm::updateLineLength(double north_min, double 
   }
 }
 
-std::string GliderMissionPlannerAlgorithm::getPathSections(double north_min, double north_max, double east_min, double east_max,
+std::string MissionPlannerAlgorithm::getPathSections(double north_min, double north_max, double east_min, double east_max,
                                                            int path_orientation, std::vector<double> vehicle_pos,
                                                            double min_turn_radius, double resolution,
                                                            std::string path_type, double velocity) {
@@ -203,7 +203,7 @@ std::string GliderMissionPlannerAlgorithm::getPathSections(double north_min, dou
   return path_sections_string;
 }
 
-std::string GliderMissionPlannerAlgorithm::getNewMissionString(double north_min, double north_max, double east_min, double east_max,
+std::string MissionPlannerAlgorithm::getNewMissionString(double north_min, double north_max, double east_min, double east_max,
                                                                int path_orientation, std::vector<double> vehicle_pos,
                                                                double min_turn_radius, double resolution, 
                                                                std::string path_type, double velocity) {
@@ -226,7 +226,7 @@ std::string GliderMissionPlannerAlgorithm::getNewMissionString(double north_min,
   return mission;
 }
 
-void GliderMissionPlannerAlgorithm::startNewMission(double north_min, double north_max, double east_min, double east_max,
+void MissionPlannerAlgorithm::startNewMission(double north_min, double north_max, double east_min, double east_max,
                                                     int path_orientation, std::vector<double> vehicle_pos,
                                                     double min_turn_radius, double resolution,
                                                     std::string path_type, double velocity, ros::Publisher mission_string_pub) {

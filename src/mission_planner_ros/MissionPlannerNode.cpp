@@ -1,11 +1,11 @@
 /* 
  * Developers: DSOR Team -> @tecnico.ulisboa.pt Instituto Superior Tecnico 
  */
-#include "GliderMissionPlannerNode.h"
-#include "GliderMissionPlannerAlgorithm.h"
+#include "MissionPlannerNode.h"
+#include "MissionPlannerAlgorithm.h"
 
 // @.@ Constructor
-GliderMissionPlannerNode::GliderMissionPlannerNode(ros::NodeHandle *nodehandle, ros::NodeHandle *nodehandle_private):nh_(*nodehandle), nh_private_(*nodehandle_private) {
+MissionPlannerNode::MissionPlannerNode(ros::NodeHandle *nodehandle, ros::NodeHandle *nodehandle_private):nh_(*nodehandle), nh_private_(*nodehandle_private) {
 
   loadParams();
   initializeSubscribers();
@@ -13,12 +13,12 @@ GliderMissionPlannerNode::GliderMissionPlannerNode(ros::NodeHandle *nodehandle, 
   initializeServices();
   initializeTimer();
 
-  glider_mission_planner_alg_ = std::make_unique<GliderMissionPlannerAlgorithm>();
+  mission_planner_alg_ = std::make_unique<MissionPlannerAlgorithm>();
 
 }
 
 // @.@ Destructor
-GliderMissionPlannerNode::~GliderMissionPlannerNode() {
+MissionPlannerNode::~MissionPlannerNode() {
 
   // +.+ shutdown publishers
   mission_string_pub_.shutdown();
@@ -36,8 +36,8 @@ GliderMissionPlannerNode::~GliderMissionPlannerNode() {
 }
 
 // @.@ Member helper to load parameters from parameter server
-void GliderMissionPlannerNode::loadParams() {
-  ROS_INFO("Load the GliderMissionPlannerNode parameters");
+void MissionPlannerNode::loadParams() {
+  ROS_INFO("Load the MissionPlannerNode parameters");
 
   p_node_frequency_ = FarolGimmicks::getParameters<double>(nh_private_, "node_frequency", 5);
   path_orientation_ = FarolGimmicks::getParameters<int>(nh_private_, "path_orientation", 1);
@@ -48,8 +48,8 @@ void GliderMissionPlannerNode::loadParams() {
 
 }
 
-bool GliderMissionPlannerNode::interestZoneService(glider_mission_planner::InterestZone::Request &req,
-                                                   glider_mission_planner::InterestZone::Response &res) {
+bool MissionPlannerNode::interestZoneService(mission_planner::InterestZone::Request &req,
+                                                   mission_planner::InterestZone::Response &res) {
   // check if max min values are correct
   if (req.northing_min > req.northing_max || req.easting_min > req.easting_max) {
     res.success = false;
@@ -58,7 +58,7 @@ bool GliderMissionPlannerNode::interestZoneService(glider_mission_planner::Inter
   }
 
   // start new mission according to zone of interest published
-  glider_mission_planner_alg_->startNewMission(req.northing_min, req.northing_max, req.easting_min, req.easting_max, 
+  mission_planner_alg_->startNewMission(req.northing_min, req.northing_max, req.easting_min, req.easting_max, 
                                                path_orientation_, veh_pos_, min_turning_radius_, resolution_,
                                                path_type_, path_speed_, mission_string_pub_);
   res.success = true;
@@ -66,13 +66,13 @@ bool GliderMissionPlannerNode::interestZoneService(glider_mission_planner::Inter
   return true;
 }
 
-void GliderMissionPlannerNode::stateCallback(const auv_msgs::NavigationStatus &msg) {
+void MissionPlannerNode::stateCallback(const auv_msgs::NavigationStatus &msg) {
   // update vehicle position
   veh_pos_[0] = msg.position.east;
   veh_pos_[1] = msg.position.north;
 }
 
-void GliderMissionPlannerNode::interestZoneAcommsCallback(const glider_mission_planner::mInterestZone &msg) {
+void MissionPlannerNode::interestZoneAcommsCallback(const mission_planner::mInterestZone &msg) {
   // ack msg
   std_msgs::Bool ack_msg;
   
@@ -84,7 +84,7 @@ void GliderMissionPlannerNode::interestZoneAcommsCallback(const glider_mission_p
 
   } else { // everything ok, let's start PF
     // start new mission according to zone of interest published
-    glider_mission_planner_alg_->startNewMission(msg.northing_min, msg.northing_max, msg.easting_min, msg.easting_max, 
+    mission_planner_alg_->startNewMission(msg.northing_min, msg.northing_max, msg.easting_min, msg.easting_max, 
                                                 path_orientation_, veh_pos_, min_turning_radius_, resolution_,
                                                 path_type_, path_speed_, mission_string_pub_);
     
@@ -96,8 +96,8 @@ void GliderMissionPlannerNode::interestZoneAcommsCallback(const glider_mission_p
   mission_started_ack_pub_.publish(ack_msg);
 }
 
-bool GliderMissionPlannerNode::changeConfigsService(glider_mission_planner::Configs::Request &req,
-                                                    glider_mission_planner::Configs::Response &res) {
+bool MissionPlannerNode::changeConfigsService(mission_planner::Configs::Request &req,
+                                                    mission_planner::Configs::Response &res) {
   // check if new configs are OK (within acceptable values)
   if ((req.path_orientation != 0 && req.path_orientation != 1) ||
       (req.path_type != "lawnmower_normal" && req.path_type != "lawnmower_encircling") ||
@@ -124,24 +124,24 @@ bool GliderMissionPlannerNode::changeConfigsService(glider_mission_planner::Conf
 
 
 // @.@ Member helper function to set up subscribers
-void GliderMissionPlannerNode::initializeSubscribers() {
-  ROS_INFO("Initializing Subscribers for GliderMissionPlannerNode");
+void MissionPlannerNode::initializeSubscribers() {
+  ROS_INFO("Initializing Subscribers for MissionPlannerNode");
 
   // subscribe to the vehicle state to update veh_pos_
   state_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
     "topics/subscribers/state", "dummy"),
-    10, &GliderMissionPlannerNode::stateCallback, this);
+    10, &MissionPlannerNode::stateCallback, this);
 
   // subscribe to the interest zone that comes via acoustic comms
   interest_zone_acomms_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
     "topics/subscribers/interest_zone_acomms", "dummy"),
-    10, &GliderMissionPlannerNode::interestZoneAcommsCallback, this);
+    10, &MissionPlannerNode::interestZoneAcommsCallback, this);
 }
 
 
 // @.@ Member helper function to set up publishers
-void GliderMissionPlannerNode::initializePublishers() {
-  ROS_INFO("Initializing Publishers for GliderMissionPlannerNode");
+void MissionPlannerNode::initializePublishers() {
+  ROS_INFO("Initializing Publishers for MissionPlannerNode");
 
   // publisher for the new mission string
   mission_string_pub_ = nh_private_.advertise<std_msgs::String>(
@@ -155,27 +155,27 @@ void GliderMissionPlannerNode::initializePublishers() {
 
 
 // @.@ Member helper function to set up services
-void GliderMissionPlannerNode::initializeServices() {
-  ROS_INFO("Initializing Services for GliderMissionPlannerNode");
+void MissionPlannerNode::initializeServices() {
+  ROS_INFO("Initializing Services for MissionPlannerNode");
 
   // servers
   interest_zone_srv_ = nh_.advertiseService(FarolGimmicks::getParameters<std::string>(nh_private_, 
-    "topics/services/interest_zone", "dummy"), &GliderMissionPlannerNode::interestZoneService, this);
+    "topics/services/interest_zone", "dummy"), &MissionPlannerNode::interestZoneService, this);
   
   change_configs_srv_ = nh_.advertiseService(FarolGimmicks::getParameters<std::string>(nh_private_, 
-    "topics/services/change_configs", "dummy"), &GliderMissionPlannerNode::changeConfigsService, this);
+    "topics/services/change_configs", "dummy"), &MissionPlannerNode::changeConfigsService, this);
 
 }
 
 
 // @.@ Member helper function to set up the timer
-void GliderMissionPlannerNode::initializeTimer() {
-  timer_ =nh_.createTimer(ros::Duration(1.0/p_node_frequency_), &GliderMissionPlannerNode::timerIterCallback, this);
+void MissionPlannerNode::initializeTimer() {
+  timer_ =nh_.createTimer(ros::Duration(1.0/p_node_frequency_), &MissionPlannerNode::timerIterCallback, this);
 }
 
 
 // @.@ Where the magic should happen.
-void GliderMissionPlannerNode::timerIterCallback(const ros::TimerEvent &event) {
+void MissionPlannerNode::timerIterCallback(const ros::TimerEvent &event) {
 
 }
 
@@ -186,7 +186,7 @@ void GliderMissionPlannerNode::timerIterCallback(const ros::TimerEvent &event) {
 int main(int argc, char** argv)
 {
   // +.+ ROS set-ups:
-  ros::init(argc, argv, "glider_mission_planner_node"); //node name
+  ros::init(argc, argv, "mission_planner_node"); //node name
   
   // +.+ node handle
   ros::NodeHandle nh;
@@ -194,10 +194,10 @@ int main(int argc, char** argv)
   // +.+ private node handle
   ros::NodeHandle nh_private("~");
 
-  ROS_INFO("main: instantiating an object of type GliderMissionPlannerNode");
+  ROS_INFO("main: instantiating an object of type MissionPlannerNode");
 
-  // +.+ instantiate an GliderMissionPlannerNode class object and pass in pointers to nodehandle public and private for constructor to use
-  GliderMissionPlannerNode glider_mission_planner(&nh,&nh_private);
+  // +.+ instantiate an MissionPlannerNode class object and pass in pointers to nodehandle public and private for constructor to use
+  MissionPlannerNode mission_planner(&nh,&nh_private);
 
   // +.+  Going into spin; let the callbacks do all the magic
   ros::spin();

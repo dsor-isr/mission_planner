@@ -1,14 +1,14 @@
 /* 
  * Developers: DSOR Team -> @tecnico.ulisboa.pt Instituto Superior Tecnico 
  */
-#ifndef CATKIN_WS_GLIDERMISSIONPLANNERALGORITHM_H
-#define CATKIN_WS_GLIDERMISSIONPLANNERALGORITHM_H
+#ifndef CATKIN_WS_MISSIONPLANNERALGORITHM_H
+#define CATKIN_WS_MISSIONPLANNERALGORITHM_H
 
 #include <std_msgs/String.h>
 #include <std_msgs/Float64.h>
 #include <ros/ros.h>
 
-class GliderMissionPlannerAlgorithm {
+class MissionPlannerAlgorithm {
   public:
    
     /* -------------------------------------------------------------------------*/
@@ -19,14 +19,14 @@ class GliderMissionPlannerAlgorithm {
     * @Param nodehandle_private
     */
     /* -------------------------------------------------------------------------*/
-    GliderMissionPlannerAlgorithm();
+    MissionPlannerAlgorithm();
 
     /* -------------------------------------------------------------------------*/
     /**
     * @brief  Destructor
     */
     /* -------------------------------------------------------------------------*/
-    ~GliderMissionPlannerAlgorithm();
+    ~MissionPlannerAlgorithm();
 
     void startNewMission(double north_min, double north_max, double east_min, double east_max,
                          int path_orientation, std::vector<double> vehicle_pos,

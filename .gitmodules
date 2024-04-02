@@ -1,9 +1,0 @@
-[submodule "farol"]
-	path = farol
-	url = git@github.com:dsor-isr/farol.git
-[submodule "slocum_glider"]
-	path = slocum_glider
-	url = git@github.com:dsor-isr/slocum_glider.git
-[submodule "gsniffer"]
-	path = gsniffer
-	url = git@github.com:ramones-eu/gsniffer.git

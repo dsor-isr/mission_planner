@@ -1,8 +1,8 @@
 /*
 Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico 
 */
- #ifndef CATKIN_WS_GLIDERMISSIONPLANNERNODE_H
- #define CATKIN_WS_GLIDERMISSIONPLANNERNODE_H
+ #ifndef CATKIN_WS_MISSIONPLANNERNODE_H
+ #define CATKIN_WS_MISSIONPLANNERNODE_H
 
  //some generically useful stuff to include...
  #include <std_msgs/String.h>
@@ -12,11 +12,11 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
 
  #include <farol_gimmicks_library/FarolGimmicks.h>
 
- #include "GliderMissionPlannerAlgorithm.h"
+ #include "MissionPlannerAlgorithm.h"
  
- #include "glider_mission_planner/mInterestZone.h" // message
- #include "glider_mission_planner/InterestZone.h" // service
- #include "glider_mission_planner/Configs.h" // service
+ #include "mission_planner/mInterestZone.h" // message
+ #include "mission_planner/InterestZone.h" // service
+ #include "mission_planner/Configs.h" // service
  #include "auv_msgs/NavigationStatus.h"
 
 /* -------------------------------------------------------------------------*/
@@ -24,7 +24,7 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
  * @brief  ADD HERE A SMALL DESCRIPTION OF THE NODE'S OBJECTIVE
  */
 /* -------------------------------------------------------------------------*/
- class GliderMissionPlannerNode {
+ class MissionPlannerNode {
  public:
    
    /* -------------------------------------------------------------------------*/
@@ -35,14 +35,14 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
     * @Param nodehandle_private
     */
    /* -------------------------------------------------------------------------*/
- 	GliderMissionPlannerNode(ros::NodeHandle* nodehandle, ros::NodeHandle *nodehandle_private);
+ 	MissionPlannerNode(ros::NodeHandle* nodehandle, ros::NodeHandle *nodehandle_private);
 
   /* -------------------------------------------------------------------------*/
   /**
    * @brief  Destructor
    */
   /* -------------------------------------------------------------------------*/
- 	~GliderMissionPlannerNode();
+ 	~MissionPlannerNode();
 
   
 
@@ -55,7 +55,7 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
  	ros::NodeHandle nh_private_;  ///< ROS private nodehandler
 
   // algorithm instance
-  std::unique_ptr<GliderMissionPlannerAlgorithm> glider_mission_planner_alg_;
+  std::unique_ptr<MissionPlannerAlgorithm> mission_planner_alg_;
 
  	// @.@ Subscribers
   ros::Subscriber state_sub_;
@@ -130,7 +130,7 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   // @.@ Callbacks declaration
 
   void stateCallback(const auv_msgs::NavigationStatus &msg);
-  void interestZoneAcommsCallback(const glider_mission_planner::mInterestZone &msg);
+  void interestZoneAcommsCallback(const mission_planner::mInterestZone &msg);
   
 
   /* -------------------------------------------------------------------------*/
@@ -145,10 +145,10 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
 
 
   // @.@ Services declaration
-  bool changeConfigsService(glider_mission_planner::Configs::Request &req,
-                            glider_mission_planner::Configs::Response &res);
-  bool interestZoneService(glider_mission_planner::InterestZone::Request &req,
-                           glider_mission_planner::InterestZone::Response &res);
+  bool changeConfigsService(mission_planner::Configs::Request &req,
+                            mission_planner::Configs::Response &res);
+  bool interestZoneService(mission_planner::InterestZone::Request &req,
+                           mission_planner::InterestZone::Response &res);
 
 
   // @.@ Member helper functions

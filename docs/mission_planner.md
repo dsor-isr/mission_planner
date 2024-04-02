@@ -1,12 +1,12 @@
-# Glider Mission Planner Node
+# Mission Planner Node
 
 ## Diagram
-<!-- ![glider_mission_planner Diagram](img/data_serializer.png) -->
+<!-- ![mission_planner Diagram](img/data_serializer.png) -->
 
 ## Subscribers
 
 - /#vehicle#/nav/filter/state [auv_msgs/NavigationStatus]
-- "/#vehicle#/acomms/interest_zone" [glider_mission_planner/mInterestZone]
+- "/#vehicle#/acomms/interest_zone" [mission_planner/mInterestZone]
 
 ## Publishers
 
