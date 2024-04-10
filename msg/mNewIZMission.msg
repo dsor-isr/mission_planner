@@ -1,0 +1,2 @@
+mission_planner/mInterestZone interest_zone
+int32[] array_of_IDs
