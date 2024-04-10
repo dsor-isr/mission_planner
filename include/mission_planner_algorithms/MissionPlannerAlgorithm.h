@@ -7,6 +7,7 @@
 #include <std_msgs/String.h>
 #include <std_msgs/Float64.h>
 #include <ros/ros.h>
+#include <fstream>
 
 class MissionPlannerAlgorithm {
   public:
@@ -29,9 +30,11 @@ class MissionPlannerAlgorithm {
     ~MissionPlannerAlgorithm();
 
     void startNewMission(double north_min, double north_max, double east_min, double east_max,
+                         std::vector<int> ids, double dist_inter_vehicles,
                          int path_orientation, std::vector<double> vehicle_pos,
                          double min_turn_radius, double resolution, 
-                         std::string path_type, double velocity, ros::Publisher mission_string_pub);
+                         std::string path_type, double velocity, ros::Publisher mission_string_pub,
+                         bool publish);
 
   private:
 
@@ -59,14 +62,20 @@ class MissionPlannerAlgorithm {
                             bool is_first_line, bool is_last_line, int path_orientation);
 
     std::string getPathSections(double north_min, double north_max, double east_min, double east_max,
+                                int nr_of_vehicles, double dist_inter_vehicles,
                                 int path_orientation, std::vector<double> vehicle_pos,
                                 double min_turn_radius, double resolution, 
                                 std::string path_type, double velocity);
 
     std::string getNewMissionString(double north_min, double north_max, double east_min, double east_max,
+                                    std::vector<int> ids, double dist_inter_vehicles,
                                     int path_orientation, std::vector<double> vehicle_pos,
                                     double min_turn_radius, double resolution,
                                     std::string path_type, double velocity);
+                              
+    std::string getFormationLine(std::vector<int> ids, double dist_inter_vehicles);
+
+    std::string stampToString(const ros::Time& stamp, const std::string);
 
     std::string mission_start_;
     std::string mission_string_;

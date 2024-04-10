@@ -22,10 +22,17 @@ MissionPlannerNode::~MissionPlannerNode() {
 
   // +.+ shutdown publishers
   mission_string_pub_.shutdown();
+  new_iz_mission_pub_.shutdown();
+  mission_started_ack_pub_.shutdown();
+  ready_for_mission_pub_.shutdown();
 
   // +.+ shutdown subscribers
   state_sub_.shutdown();
-  interest_zone_acomms_sub_.shutdown();
+  interest_zone_sub_.shutdown();
+  new_iz_mission_acomms_sub_.shutdown();
+  being_scanned_acomms_sub_.shutdown();
+  mission_started_ack_acomms_sub_.shutdown();
+  
 
   // +.+ stop timer
   timer_.stop();
@@ -45,11 +52,12 @@ void MissionPlannerNode::loadParams() {
   min_turning_radius_ = FarolGimmicks::getParameters<double>(nh_private_, "min_turning_radius", 50);
   path_speed_ = FarolGimmicks::getParameters<double>(nh_private_, "path_speed", 0.7);
   resolution_ = FarolGimmicks::getParameters<double>(nh_private_, "resolution", 10);
-
+  dist_inter_vehicles_ = FarolGimmicks::getParameters<double>(nh_private_, "dist_inter_vehicles", 15);
+  vehicle_id_ = FarolGimmicks::getParameters<int>(nh_private_, "mission_planner/vehicle_id", 1);
 }
 
 bool MissionPlannerNode::interestZoneService(mission_planner::InterestZone::Request &req,
-                                                   mission_planner::InterestZone::Response &res) {
+                                             mission_planner::InterestZone::Response &res) {
   // check if max min values are correct
   if (req.northing_min > req.northing_max || req.easting_min > req.easting_max) {
     res.success = false;
@@ -57,10 +65,14 @@ bool MissionPlannerNode::interestZoneService(mission_planner::InterestZone::Requ
     return false;
   }
 
+  std::vector<int> ids = {vehicle_id_};
+
   // start new mission according to zone of interest published
-  mission_planner_alg_->startNewMission(req.northing_min, req.northing_max, req.easting_min, req.easting_max, 
-                                               path_orientation_, veh_pos_, min_turning_radius_, resolution_,
-                                               path_type_, path_speed_, mission_string_pub_);
+  mission_planner_alg_->startNewMission(req.northing_min, req.northing_max, req.easting_min, req.easting_max,
+                                        ids, dist_inter_vehicles_,
+                                        path_orientation_, veh_pos_, min_turning_radius_, resolution_,
+                                        path_type_, path_speed_, mission_string_pub_,
+                                        true);
   res.success = true;
   res.message = "Started new PF Mission on interest zone.";
   return true;
@@ -72,28 +84,105 @@ void MissionPlannerNode::stateCallback(const auv_msgs::NavigationStatus &msg) {
   veh_pos_[1] = msg.position.north;
 }
 
-void MissionPlannerNode::interestZoneAcommsCallback(const mission_planner::mInterestZone &msg) {
+void MissionPlannerNode::interestZoneCallback(const mission_planner::mInterestZone &msg) {
+  // populate new interest zone mission message with IZ and array of IDs corresponding
+  // to the participating vehicles in the mission and publish
+
+  // CHECK IF PARTICIPATING VEHICLES HAVE BEEN SCANNED
+  // (otherwise, don't send interest zone, we need the array of IDs)
+  if (participating_veh_.empty()) {
+    ROS_WARN_STREAM("Interest Zone not sent to other vehicles. Need to scan for available vehicles first.");
+    return;
+  }
+
+  // convert set of participating vehicles' ids to vector
+  std::vector<int> ids(participating_veh_.begin(), participating_veh_.end());
+
+  // msg to be sent
+  mission_planner::mNewIZMission new_mission_msg;
+
+  new_mission_msg.interest_zone = msg;
+  new_mission_msg.array_of_IDs = ids;
+
+  // publish message
+  new_iz_mission_pub_.publish(new_mission_msg);
+
+  // update last received mission message
+  last_IZ_mission_.interest_zone.northing_min = new_mission_msg.interest_zone.northing_min;
+  last_IZ_mission_.interest_zone.northing_max = new_mission_msg.interest_zone.northing_max;
+  last_IZ_mission_.interest_zone.easting_min = new_mission_msg.interest_zone.easting_min;
+  last_IZ_mission_.interest_zone.easting_max = new_mission_msg.interest_zone.easting_max;
+  last_IZ_mission_.array_of_IDs = new_mission_msg.array_of_IDs;
+}
+
+void MissionPlannerNode::newIZMissionZoneAcommsCallback(const mission_planner::mNewIZMission &msg) { 
   // ack msg
-  std_msgs::Bool ack_msg;
+  mission_planner::mMissionStartedAck ack_msg;
   
   // check if max min values are correct
-  if (msg.northing_min > msg.northing_max || msg.easting_min > msg.easting_max) { // not good
+  if (msg.interest_zone.northing_min > msg.interest_zone.northing_max || 
+      msg.interest_zone.easting_min > msg.interest_zone.easting_max || 
+      msg.array_of_IDs.size() < 1) { // not good
     // send acoustic message back saying PF HAS NOT started
-    // send FALSE
-    ack_msg.data = false;
+    ack_msg.started_ack = false;
 
   } else { // everything ok, let's start PF
     // start new mission according to zone of interest published
-    mission_planner_alg_->startNewMission(msg.northing_min, msg.northing_max, msg.easting_min, msg.easting_max, 
-                                                path_orientation_, veh_pos_, min_turning_radius_, resolution_,
-                                                path_type_, path_speed_, mission_string_pub_);
+    mission_planner_alg_->startNewMission(msg.interest_zone.northing_min, msg.interest_zone.northing_max, 
+                                            msg.interest_zone.easting_min, msg.interest_zone.easting_max,
+                                          msg.array_of_IDs, dist_inter_vehicles_,
+                                          path_orientation_, veh_pos_, min_turning_radius_, resolution_,
+                                          path_type_, path_speed_, mission_string_pub_,
+                                          true);
     
     // send acoustic message back saying PF HAS started
-    // send TRUE
-    ack_msg.data = true;
+    ack_msg.started_ack = true;
+
+    // reset set of vehicle IDs which have acknowledged their mission has started
+    mission_started_veh_.clear();
   }
 
+  ack_msg.vehicle_ID = vehicle_id_;
   mission_started_ack_pub_.publish(ack_msg);
+}
+
+void MissionPlannerNode::beingScannedAcommsCallback(const std_msgs::Empty &msg) {
+  // if we are being scanned, send back a message saying we want to be a part of the mission
+  // with our vehicle ID
+
+  std_msgs::Int8 new_msg;
+  new_msg.data = vehicle_id_;
+
+  ready_for_mission_pub_.publish(new_msg);
+}
+
+void MissionPlannerNode::vehicleReadyAcommsCallback(const std_msgs::Int8 &msg) {
+  // update set of participating vehicle IDs
+  participating_veh_.insert(msg.data);
+}
+
+void MissionPlannerNode::missionStartedAckAcommsCallback(const mission_planner::mMissionStartedAck &msg) {
+  // check if mission started
+  if (!msg.started_ack) {
+    ROS_WARN_STREAM("PF Mission NOT STARTED for vehicle ID: " + std::to_string(msg.vehicle_ID));
+    return;
+  }
+
+  // if mission has started, add ID to set of vehicles for which the mission has started
+  mission_started_veh_.insert(msg.vehicle_ID);
+  ROS_WARN_STREAM("PF Mission started normally for vehicle ID: " + std::to_string(msg.vehicle_ID));
+
+  // if the mission has started for all of them, declare SUCCESS and create mission file
+  if (mission_started_veh_ == participating_veh_) {
+    ROS_WARN_STREAM("All participating vehicles acknowledged mission start.");
+    // actually doesn't "START" a new mission, just creates the mission string and writes to file, because of FALSE flag
+    mission_planner_alg_->startNewMission(last_IZ_mission_.interest_zone.northing_min, last_IZ_mission_.interest_zone.northing_max, 
+                                            last_IZ_mission_.interest_zone.easting_min, last_IZ_mission_.interest_zone.easting_max,
+                                          last_IZ_mission_.array_of_IDs, dist_inter_vehicles_,
+                                          path_orientation_, veh_pos_, min_turning_radius_, resolution_,
+                                          path_type_, path_speed_, mission_string_pub_,
+                                          false);
+  }
 }
 
 bool MissionPlannerNode::changeConfigsService(mission_planner::Configs::Request &req,
@@ -132,10 +221,31 @@ void MissionPlannerNode::initializeSubscribers() {
     "topics/subscribers/state", "dummy"),
     10, &MissionPlannerNode::stateCallback, this);
 
+  // subscribe to the interest zone that is published on the master vehicle, the one who is going to send it via acomms
+  interest_zone_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
+    "topics/subscribers/interest_zone", "dummy"),
+    10, &MissionPlannerNode::interestZoneCallback, this);
+
   // subscribe to the interest zone that comes via acoustic comms
-  interest_zone_acomms_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
-    "topics/subscribers/interest_zone_acomms", "dummy"),
-    10, &MissionPlannerNode::interestZoneAcommsCallback, this);
+  new_iz_mission_acomms_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
+    "topics/subscribers/new_iz_mission_acomms", "dummy"),
+    10, &MissionPlannerNode::newIZMissionZoneAcommsCallback, this);
+
+  // subscribe to the topic that asks if we are being scanned for a future IZ mission
+  being_scanned_acomms_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
+    "topics/subscribers/being_scanned_acomms", "dummy"),
+    10, &MissionPlannerNode::beingScannedAcommsCallback, this);
+
+  // subscribe to the topic that receives the ID of participating vehicles in the IZ mission
+  vehicle_ready_acomms_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
+    "topics/subscribers/vehicle_ready_acomms", "dummy"),
+    10, &MissionPlannerNode::vehicleReadyAcommsCallback, this);
+
+  // subscribe to the acknowledgement received from the participation vehicles in the IZ mission
+  mission_started_ack_acomms_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
+    "topics/subscribers/mission_started_ack_acomms", "dummy"),
+    10, &MissionPlannerNode::missionStartedAckAcommsCallback, this);
+
 }
 
 
@@ -148,9 +258,17 @@ void MissionPlannerNode::initializePublishers() {
       FarolGimmicks::getParameters<std::string>(
           nh_private_, "topics/publishers/Mission_String", "dummy"), 1);
 
-  mission_started_ack_pub_ = nh_private_.advertise<std_msgs::Bool>(
+  new_iz_mission_pub_ = nh_private_.advertise<mission_planner::mNewIZMission>(
+      FarolGimmicks::getParameters<std::string>(
+          nh_private_, "topics/publishers/new_iz_mission", "dummy"), 1);
+
+  mission_started_ack_pub_ = nh_private_.advertise<std_msgs::Int8>(
       FarolGimmicks::getParameters<std::string>(
           nh_private_, "topics/publishers/mission_started_ack", "dummy"), 1);
+
+  ready_for_mission_pub_ = nh_private_.advertise<std_msgs::Int8>(
+      FarolGimmicks::getParameters<std::string>(
+          nh_private_, "topics/publishers/ready_for_mission", "dummy"), 1);
 }
 
 

@@ -86,6 +86,7 @@ double MissionPlannerAlgorithm::updateLineLength(double north_min, double north_
 }
 
 std::string MissionPlannerAlgorithm::getPathSections(double north_min, double north_max, double east_min, double east_max,
+                                                           int nr_of_vehicles, double dist_inter_vehicles,
                                                            int path_orientation, std::vector<double> vehicle_pos,
                                                            double min_turn_radius, double resolution,
                                                            std::string path_type, double velocity) {
@@ -117,7 +118,7 @@ std::string MissionPlannerAlgorithm::getPathSections(double north_min, double no
   int current_adirection = getInitialArcDirection(path_pos, north_min, north_max, east_min, east_max, path_orientation);
 
   // compute normal and big radii
-  double normal_radius = min_turn_radius;
+  double normal_radius = min_turn_radius + dist_inter_vehicles * (nr_of_vehicles / 2 - 0.5); // sum to the minimum turn radius a compensation for the number of vehicles cooperating
   double big_radius = (path_type == "lawnmower_encircling") ? normal_radius + resolution/2 : normal_radius;
 
   // current radius and line_length
@@ -203,15 +204,41 @@ std::string MissionPlannerAlgorithm::getPathSections(double north_min, double no
   return path_sections_string;
 }
 
+std::string MissionPlannerAlgorithm::getFormationLine(std::vector<int> ids, double dist_inter_vehicles) {
+  // FORMAT: FORMATION ID1 x_dist y_dist ID2 x_dist y_dist ID3 x_dist y_dist
+  std::string formation_line = "FORMATION";
+  int i = 0; // iterator for for loop
+  
+  // leftmost path offset
+  double leftmost_offset = - dist_inter_vehicles * (ids.size() / 2 - 0.5);
+  
+  // add offset for each vehicle ID
+  for (int id : ids) {
+    formation_line += " " + std::to_string(id) + " 0 " + std::to_string(leftmost_offset + dist_inter_vehicles * i);
+    i++;
+  }
+
+  // next line
+  formation_line += "\n";
+  
+  return formation_line;
+}
+
 std::string MissionPlannerAlgorithm::getNewMissionString(double north_min, double north_max, double east_min, double east_max,
-                                                               int path_orientation, std::vector<double> vehicle_pos,
-                                                               double min_turn_radius, double resolution, 
-                                                               std::string path_type, double velocity) {
+                                                         std::vector<int> ids, double dist_inter_vehicles,
+                                                         int path_orientation, std::vector<double> vehicle_pos,
+                                                         double min_turn_radius, double resolution, 
+                                                         std::string path_type, double velocity) {
   // create new string
   std::string mission = mission_start_;
 
   // add mission reference point (bottom left corner of the zone of interest)
   mission += std::to_string(east_min) + " " + std::to_string(north_min) + "\n";
+
+  // add formation line if there is more than 1 vehicle
+  if (ids.size() > 1) {
+    mission += getFormationLine(ids, dist_inter_vehicles);
+  }
 
   // move vehicle position to zone of interest's frame
   vehicle_pos[0] -= east_min;
@@ -219,6 +246,7 @@ std::string MissionPlannerAlgorithm::getNewMissionString(double north_min, doubl
 
   // add path sections
   mission += getPathSections(0, north_max - north_min, 0, east_max - east_min,
+                             ids.size(), dist_inter_vehicles,
                              path_orientation, vehicle_pos,
                              min_turn_radius, resolution, path_type, velocity);
 
@@ -226,12 +254,27 @@ std::string MissionPlannerAlgorithm::getNewMissionString(double north_min, doubl
   return mission;
 }
 
+std::string MissionPlannerAlgorithm::stampToString(const ros::Time& stamp, const std::string format="%Y-%m-%d-%H-%M-%S") {
+  const int output_size = 100;
+  char output[output_size];
+  std::time_t raw_time = static_cast<time_t>(stamp.sec);
+  struct tm* timeinfo = localtime(&raw_time);
+  std::strftime(output, output_size, format.c_str(), timeinfo);
+  std::stringstream ss; 
+  ss << std::setw(9) << std::setfill('0') << stamp.nsec;
+  return std::string(output);
+}
+
 void MissionPlannerAlgorithm::startNewMission(double north_min, double north_max, double east_min, double east_max,
-                                                    int path_orientation, std::vector<double> vehicle_pos,
-                                                    double min_turn_radius, double resolution,
-                                                    std::string path_type, double velocity, ros::Publisher mission_string_pub) {
+                                              std::vector<int> ids, double dist_inter_vehicles,
+                                              int path_orientation, std::vector<double> vehicle_pos,
+                                              double min_turn_radius, double resolution,
+                                              std::string path_type, double velocity, ros::Publisher mission_string_pub,
+                                              bool publish) {
+
   // get mission string
   mission_string_ = getNewMissionString(north_min, north_max, east_min, east_max,
+                                        ids, dist_inter_vehicles,
                                         path_orientation, vehicle_pos,
                                         min_turn_radius, resolution, 
                                         path_type, velocity);
@@ -239,10 +282,23 @@ void MissionPlannerAlgorithm::startNewMission(double north_min, double north_max
   ROS_INFO("\nMISSION FILE:\n");
   std::cout << mission_string_;
 
-  std_msgs::String new_mission;
-  new_mission.data = mission_string_;
+  if (publish) {
+    std_msgs::String new_mission;
+    new_mission.data = mission_string_;
 
-  // publish new mission string to start new PF
-  mission_string_pub.publish(new_mission);
+    // publish new mission string to start new PF
+    mission_string_pub.publish(new_mission);
+  } else { // special case for writing mission to file
+    ROS_WARN_STREAM("Writing mission file.");
+
+    std::string home = getenv("HOME");
+    std::string dir = home + "/ramones_mission_" + stampToString(ros::Time::now()) + ".txt";
+
+    // write to file
+    std::ofstream myfile;
+    myfile.open(dir);
+    myfile << mission_string_;
+    myfile.close();
+  }
 
 }

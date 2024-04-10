@@ -7,6 +7,8 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
  //some generically useful stuff to include...
  #include <std_msgs/String.h>
  #include <std_msgs/Bool.h>
+ #include <std_msgs/Empty.h>
+ #include <std_msgs/Int8.h>
  #include <vector>
  #include <ros/ros.h> 
 
@@ -15,6 +17,8 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
  #include "MissionPlannerAlgorithm.h"
  
  #include "mission_planner/mInterestZone.h" // message
+ #include "mission_planner/mNewIZMission.h" // message
+ #include "mission_planner/mMissionStartedAck.h" // message
  #include "mission_planner/InterestZone.h" // service
  #include "mission_planner/Configs.h" // service
  #include "auv_msgs/NavigationStatus.h"
@@ -59,12 +63,18 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
 
  	// @.@ Subscribers
   ros::Subscriber state_sub_;
-  ros::Subscriber interest_zone_acomms_sub_;
+  ros::Subscriber interest_zone_sub_;
+  ros::Subscriber new_iz_mission_acomms_sub_;
+  ros::Subscriber being_scanned_acomms_sub_;
+  ros::Subscriber vehicle_ready_acomms_sub_;
+  ros::Subscriber mission_started_ack_acomms_sub_;
 
 
  	// @.@ Publishers
   ros::Publisher mission_string_pub_;
   ros::Publisher mission_started_ack_pub_;
+  ros::Publisher new_iz_mission_pub_;
+  ros::Publisher ready_for_mission_pub_;
 
  	// @.@ Timer
  	ros::Timer timer_;           ///< ROS Timer
@@ -76,9 +86,14 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   double min_turning_radius_;
   double path_speed_;
   double resolution_;
+  double dist_inter_vehicles_;
+  int vehicle_id_; // id for paths with multiple vehicles (normally in a CPF situation)
 
  	// @.@ Problem variables
   std::vector<double> veh_pos_ = {0.0, 0.0};
+  std::set<int> participating_veh_;
+  std::set<int> mission_started_veh_; // set of vehicle IDs for which the mission has stated successfully
+  mission_planner::mNewIZMission last_IZ_mission_;
  	
 
   // @.@ Encapsulation the gory details of initializing subscribers, publishers and services
@@ -130,7 +145,11 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   // @.@ Callbacks declaration
 
   void stateCallback(const auv_msgs::NavigationStatus &msg);
-  void interestZoneAcommsCallback(const mission_planner::mInterestZone &msg);
+  void interestZoneCallback(const mission_planner::mInterestZone &msg);
+  void newIZMissionZoneAcommsCallback(const mission_planner::mNewIZMission &msg);
+  void beingScannedAcommsCallback(const std_msgs::Empty &msg);
+  void vehicleReadyAcommsCallback(const std_msgs::Int8 &msg);
+  void missionStartedAckAcommsCallback(const mission_planner::mMissionStartedAck &msg);
   
 
   /* -------------------------------------------------------------------------*/
