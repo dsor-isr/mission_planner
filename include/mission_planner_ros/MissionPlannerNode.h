@@ -68,6 +68,7 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   ros::Subscriber being_scanned_acomms_sub_;
   ros::Subscriber vehicle_ready_acomms_sub_;
   ros::Subscriber mission_started_ack_acomms_sub_;
+  ros::Subscriber stop_pf_sub_;
 
 
  	// @.@ Publishers
@@ -75,6 +76,8 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   ros::Publisher mission_started_ack_pub_;
   ros::Publisher new_iz_mission_pub_;
   ros::Publisher ready_for_mission_pub_;
+  ros::Publisher stop_all_pf_pub_;
+  ros::Publisher status_flag_pub_;
 
  	// @.@ Timer
  	ros::Timer timer_;           ///< ROS Timer
@@ -88,12 +91,16 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   double resolution_;
   double dist_inter_vehicles_;
   int vehicle_id_; // id for paths with multiple vehicles (normally in a CPF situation)
+  double timeout_ack_;
 
  	// @.@ Problem variables
   std::vector<double> veh_pos_ = {0.0, 0.0};
   std::set<int> participating_veh_;
   std::set<int> mission_started_veh_; // set of vehicle IDs for which the mission has stated successfully
   mission_planner::mNewIZMission last_IZ_mission_;
+  bool waiting_for_mission_started_ack = false;
+  double waiting_time_start = 0;
+  double time = 0;
  	
 
   // @.@ Encapsulation the gory details of initializing subscribers, publishers and services
@@ -149,6 +156,7 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   void newIZMissionZoneAcommsCallback(const mission_planner::mNewIZMission &msg);
   void beingScannedAcommsCallback(const std_msgs::Empty &msg);
   void vehicleReadyAcommsCallback(const std_msgs::Int8 &msg);
+  void stopPFAcomms(const std_msgs::Empty &msg);
   void missionStartedAckAcommsCallback(const mission_planner::mMissionStartedAck &msg);
   
 
@@ -171,6 +179,7 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
 
 
   // @.@ Member helper functions
+  void stopParticipatingVehiclesPF();
 
 
 };

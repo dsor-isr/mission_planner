@@ -11,7 +11,8 @@ This path can be a **normal** lawnmower or an **encircling** lawnmower, both ful
 
 ## Communication Protocol
 
-The surface vessel starts by scanning for available underwater vehicles (AUVs) which are willing to participate in a PF mission inside an area of interest. Those willing to do so send back to the vessel a confirmation that they are ready to start the mission. After getting confirmation from a set of AUVs, the surface vessel can publish a zone of interest, which is then sent to the AUVs. These will then generate the mission string, start the PF and send back to the vessel an acknowledge message confirming the successful start of the mission.
+The surface vessel starts by scanning for available underwater vehicles (AUVs) which are willing to participate in a PF mission inside an area of interest. Those willing to do so send back to the vessel a confirmation that they are ready to start the mission. After getting confirmation from a set of AUVs, the surface vessel can publish a zone of interest, which is then sent to the AUVs. These will then generate the mission string, start the PF and send back to the vessel an acknowledge message confirming the successful start of the mission, which indicates to the surface vessel to save a file in the home directory with the current mission.
+In the case that any of the scanned AUVs doesn't acknowledge back the successful start of the mission (according to a configurable timeout parameter), then the surface vessel tells all AUVs to stop the PF (tells them to publish a flag 0).
 
 ## Nodes
 * [mission_planner](mission_planner.md)

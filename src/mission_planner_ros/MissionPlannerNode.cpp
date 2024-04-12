@@ -54,6 +54,7 @@ void MissionPlannerNode::loadParams() {
   resolution_ = FarolGimmicks::getParameters<double>(nh_private_, "resolution", 10);
   dist_inter_vehicles_ = FarolGimmicks::getParameters<double>(nh_private_, "dist_inter_vehicles", 15);
   vehicle_id_ = FarolGimmicks::getParameters<int>(nh_private_, "mission_planner/vehicle_id", 1);
+  timeout_ack_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/timeout_ack", 120);
 }
 
 bool MissionPlannerNode::interestZoneService(mission_planner::InterestZone::Request &req,
@@ -95,6 +96,13 @@ void MissionPlannerNode::interestZoneCallback(const mission_planner::mInterestZo
     return;
   }
 
+  // check if max min values are correct
+  if (msg.northing_min > msg.northing_max || 
+      msg.easting_min > msg.easting_max) {
+    ROS_WARN_STREAM("Interest Zone not sent to other vehicles. Incoherent min/max values.");
+    return;
+  }
+
   // convert set of participating vehicles' ids to vector
   std::vector<int> ids(participating_veh_.begin(), participating_veh_.end());
 
@@ -105,7 +113,12 @@ void MissionPlannerNode::interestZoneCallback(const mission_planner::mInterestZo
   new_mission_msg.array_of_IDs = ids;
 
   // publish message
+  ROS_WARN_STREAM("Interest Zone sent to other vehicles.");
   new_iz_mission_pub_.publish(new_mission_msg);
+
+  // update flag and save new instant of time
+  waiting_for_mission_started_ack = true;
+  waiting_time_start = ros::Time::now().toSec();
 
   // update last received mission message
   last_IZ_mission_.interest_zone.northing_min = new_mission_msg.interest_zone.northing_min;
@@ -161,10 +174,29 @@ void MissionPlannerNode::vehicleReadyAcommsCallback(const std_msgs::Int8 &msg) {
   participating_veh_.insert(msg.data);
 }
 
+void MissionPlannerNode::stopParticipatingVehiclesPF() {
+  // make all participating vehicles publish Flag 0
+  std_msgs::Empty empty_msg;
+  stop_all_pf_pub_.publish(empty_msg);
+}
+
+void MissionPlannerNode::stopPFAcomms(const std_msgs::Empty &msg) {
+  // publish Flag 0 to stop PF if it is running
+  std_msgs::Int8 new_msg;
+  new_msg.data = 0;
+  
+  status_flag_pub_.publish(new_msg);
+}
+
 void MissionPlannerNode::missionStartedAckAcommsCallback(const mission_planner::mMissionStartedAck &msg) {
   // check if mission started
   if (!msg.started_ack) {
     ROS_WARN_STREAM("PF Mission NOT STARTED for vehicle ID: " + std::to_string(msg.vehicle_ID));
+
+    // stop all PF and we're not waiting for acks anymore
+    ROS_WARN_STREAM("Stopping PF for all participating vehicles (FLAG 0).");
+    stopParticipatingVehiclesPF();
+    waiting_for_mission_started_ack = false;
     return;
   }
 
@@ -182,6 +214,9 @@ void MissionPlannerNode::missionStartedAckAcommsCallback(const mission_planner::
                                           path_orientation_, veh_pos_, min_turning_radius_, resolution_,
                                           path_type_, path_speed_, mission_string_pub_,
                                           false);
+
+    // no longer waiting for acks
+    waiting_for_mission_started_ack = false;
   }
 }
 
@@ -246,6 +281,10 @@ void MissionPlannerNode::initializeSubscribers() {
     "topics/subscribers/mission_started_ack_acomms", "dummy"),
     10, &MissionPlannerNode::missionStartedAckAcommsCallback, this);
 
+  stop_pf_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
+    "topics/subscribers/stop_pf", "dummy"),
+    10, &MissionPlannerNode::stopPFAcomms, this);
+
 }
 
 
@@ -269,6 +308,14 @@ void MissionPlannerNode::initializePublishers() {
   ready_for_mission_pub_ = nh_private_.advertise<std_msgs::Int8>(
       FarolGimmicks::getParameters<std::string>(
           nh_private_, "topics/publishers/ready_for_mission", "dummy"), 1);
+
+  stop_all_pf_pub_ = nh_private_.advertise<std_msgs::Empty>(
+      FarolGimmicks::getParameters<std::string>(
+          nh_private_, "topics/publishers/stop_all_pf", "dummy"), 1);
+
+  status_flag_pub_ = nh_private_.advertise<std_msgs::Int8>(
+      FarolGimmicks::getParameters<std::string>(
+          nh_private_, "topics/publishers/status_flag", "dummy"), 1);
 }
 
 
@@ -294,7 +341,19 @@ void MissionPlannerNode::initializeTimer() {
 
 // @.@ Where the magic should happen.
 void MissionPlannerNode::timerIterCallback(const ros::TimerEvent &event) {
+  
+  // if waiting for ack from participating vehicles
+  if (waiting_for_mission_started_ack) {
+    time = ros::Time::now().toSec();
 
+    // if we have been waiting for more than timeout seconds, abort mission and send flag 0 to all vehicles
+    if (time - waiting_time_start > timeout_ack_) {
+      // stop all PF and we're not waiting for acks anymore
+      ROS_WARN_STREAM("Stopping PF for all participating vehicles (FLAG 0).");
+      stopParticipatingVehiclesPF();
+      waiting_for_mission_started_ack = false;
+    }
+  }
 }
 
 

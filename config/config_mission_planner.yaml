@@ -5,3 +5,4 @@ min_turning_radius: 50
 path_speed: 0.7
 resolution: 20 # if path_type = lawnmower_encircling, resolution is the distance between the lawnmower's legs
 dist_inter_vehicles: 10 # distance between paths when multiple paths are generated, for CPF
+timeout_ack: 60 # time to wait without no ack from participating vehicles

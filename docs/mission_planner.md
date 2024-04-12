@@ -18,6 +18,7 @@
 - "/#vehicle#/mission_planner/mission_started_ack" [std_msgs/Int8]
 - "/#vehicle#/mission_planner/new_iz_mission" [mission_planner/mNewIZMission]
 - "/#vehicle#/mission_planner/ready_for_mission" [std_msgs/Int8]
+- "/#vehicle#/mission_planner/stop_all_pf" [std_msgs::Empty]
 
 ## Services
 
@@ -34,3 +35,4 @@
 - resolution_
 - dist_inter_vehicles_
 - vehicle_id_
+- timeout_ack_
