@@ -301,7 +301,7 @@ void MissionPlannerNode::initializePublishers() {
       FarolGimmicks::getParameters<std::string>(
           nh_private_, "topics/publishers/new_iz_mission", "dummy"), 1);
 
-  mission_started_ack_pub_ = nh_private_.advertise<std_msgs::Int8>(
+  mission_started_ack_pub_ = nh_private_.advertise<mission_planner::mMissionStartedAck>(
       FarolGimmicks::getParameters<std::string>(
           nh_private_, "topics/publishers/mission_started_ack", "dummy"), 1);
 
