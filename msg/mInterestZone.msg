@@ -1,4 +1,4 @@
-float64 northing_min
-float64 northing_max
-float64 easting_min
-float64 easting_max
+float32 northing_min
+float32 northing_max
+float32 easting_min
+float32 easting_max
