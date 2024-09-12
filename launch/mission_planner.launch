@@ -11,7 +11,7 @@
 
  <node pkg="mission_planner" type="mission_planner_node" name="MissionPlannerNode" respawn="false" output="screen">
 	<rosparam command="load" file="$(find mission_planner)/config/config_mission_planner.yaml"/>
-  <rosparam command="load" file="$(arg dollar)$(arg config_package_path))/config/$(arg folder)/$(arg name)/addons.yaml" />
+  <!-- <rosparam command="load" file="$(arg dollar)$(arg config_package_path))/config/$(arg folder)/$(arg name)/addons.yaml" /> -->
 </node>
 
 </launch>
