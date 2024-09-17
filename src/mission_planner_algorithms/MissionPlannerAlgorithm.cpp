@@ -266,12 +266,29 @@ std::string MissionPlannerAlgorithm::stampToString(const ros::Time& stamp, const
 }
 
 void MissionPlannerAlgorithm::startNewMission(double north_min, double north_max, double east_min, double east_max,
-                                              std::vector<int> ids, double dist_inter_vehicles,
+                                              int ID0, int ID1, int ID2, int ID3, double dist_inter_vehicles,
                                               int path_orientation, std::vector<double> vehicle_pos,
                                               double min_turn_radius, double resolution,
                                               std::string path_type, double velocity, ros::Publisher mission_string_pub,
                                               bool publish) {
 
+  // create set with non negative ids
+  std::set<int> ids_set;
+  ids_set.insert(ID0);
+
+  if (ID1 != -1) {
+    ids_set.insert(ID1);
+    if (ID2 != -1) {
+      ids_set.insert(ID2);
+      if (ID3 != -1) {
+        ids_set.insert(ID3);
+      }
+    }
+  }
+
+  // create vector from set
+  std::vector<int> ids(ids_set.begin(), ids_set.end());
+  
   // get mission string
   mission_string_ = getNewMissionString(north_min, north_max, east_min, east_max,
                                         ids, dist_inter_vehicles,

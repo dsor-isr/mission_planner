@@ -70,7 +70,7 @@ bool MissionPlannerNode::interestZoneService(mission_planner::InterestZone::Requ
 
   // start new mission according to zone of interest published
   mission_planner_alg_->startNewMission(req.northing_min, req.northing_max, req.easting_min, req.easting_max,
-                                        ids, dist_inter_vehicles_,
+                                        ids[0], -1, -1, -1, dist_inter_vehicles_,
                                         path_orientation_, veh_pos_, min_turning_radius_, resolution_,
                                         path_type_, path_speed_, mission_string_pub_,
                                         true);
@@ -110,7 +110,11 @@ void MissionPlannerNode::interestZoneCallback(const mission_planner::mInterestZo
   mission_planner::mNewIZMission new_mission_msg;
 
   new_mission_msg.interest_zone = msg;
-  new_mission_msg.array_of_IDs = ids;
+
+  new_mission_msg.ID0 = ids[0];
+  new_mission_msg.ID1 = (ids.size() > 1) ? -1 : ids[1];
+  new_mission_msg.ID2 = (ids.size() > 2) ? -1 : ids[2];
+  new_mission_msg.ID3 = (ids.size() > 3) ? -1 : ids[3];
 
   // publish message
   ROS_WARN_STREAM("Interest Zone sent to other vehicles.");
@@ -125,7 +129,10 @@ void MissionPlannerNode::interestZoneCallback(const mission_planner::mInterestZo
   last_IZ_mission_.interest_zone.northing_max = new_mission_msg.interest_zone.northing_max;
   last_IZ_mission_.interest_zone.easting_min = new_mission_msg.interest_zone.easting_min;
   last_IZ_mission_.interest_zone.easting_max = new_mission_msg.interest_zone.easting_max;
-  last_IZ_mission_.array_of_IDs = new_mission_msg.array_of_IDs;
+  last_IZ_mission_.ID0 = new_mission_msg.ID0;
+  last_IZ_mission_.ID1 = new_mission_msg.ID1;
+  last_IZ_mission_.ID2 = new_mission_msg.ID2;
+  last_IZ_mission_.ID3 = new_mission_msg.ID3;
 }
 
 void MissionPlannerNode::newIZMissionZoneAcommsCallback(const mission_planner::mNewIZMission &msg) { 
@@ -135,7 +142,7 @@ void MissionPlannerNode::newIZMissionZoneAcommsCallback(const mission_planner::m
   // check if max min values are correct
   if (msg.interest_zone.northing_min > msg.interest_zone.northing_max || 
       msg.interest_zone.easting_min > msg.interest_zone.easting_max || 
-      msg.array_of_IDs.size() < 1) { // not good
+      msg.ID0 == -1) { // not good
     // send acoustic message back saying PF HAS NOT started
     ack_msg.started_ack = false;
 
@@ -143,7 +150,7 @@ void MissionPlannerNode::newIZMissionZoneAcommsCallback(const mission_planner::m
     // start new mission according to zone of interest published
     mission_planner_alg_->startNewMission(msg.interest_zone.northing_min, msg.interest_zone.northing_max, 
                                             msg.interest_zone.easting_min, msg.interest_zone.easting_max,
-                                          msg.array_of_IDs, dist_inter_vehicles_,
+                                          msg.ID0, msg.ID1, msg.ID2, msg.ID3, dist_inter_vehicles_,
                                           path_orientation_, veh_pos_, min_turning_radius_, resolution_,
                                           path_type_, path_speed_, mission_string_pub_,
                                           true);
@@ -211,7 +218,7 @@ void MissionPlannerNode::missionStartedAckAcommsCallback(const mission_planner::
     // actually doesn't "START" a new mission, just creates the mission string and writes to file, because of FALSE flag
     mission_planner_alg_->startNewMission(last_IZ_mission_.interest_zone.northing_min, last_IZ_mission_.interest_zone.northing_max, 
                                             last_IZ_mission_.interest_zone.easting_min, last_IZ_mission_.interest_zone.easting_max,
-                                          last_IZ_mission_.array_of_IDs, dist_inter_vehicles_,
+                                          last_IZ_mission_.ID0, last_IZ_mission_.ID1, last_IZ_mission_.ID2, last_IZ_mission_.ID3, dist_inter_vehicles_,
                                           path_orientation_, veh_pos_, min_turning_radius_, resolution_,
                                           path_type_, path_speed_, mission_string_pub_,
                                           false);

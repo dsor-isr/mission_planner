@@ -30,7 +30,7 @@ class MissionPlannerAlgorithm {
     ~MissionPlannerAlgorithm();
 
     void startNewMission(double north_min, double north_max, double east_min, double east_max,
-                         std::vector<int> ids, double dist_inter_vehicles,
+                         int ID0, int ID1, int ID2, int ID3, double dist_inter_vehicles,
                          int path_orientation, std::vector<double> vehicle_pos,
                          double min_turn_radius, double resolution, 
                          std::string path_type, double velocity, ros::Publisher mission_string_pub,
