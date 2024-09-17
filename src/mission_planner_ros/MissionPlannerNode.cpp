@@ -53,7 +53,7 @@ void MissionPlannerNode::loadParams() {
   path_speed_ = FarolGimmicks::getParameters<double>(nh_private_, "path_speed", 0.7);
   resolution_ = FarolGimmicks::getParameters<double>(nh_private_, "resolution", 10);
   dist_inter_vehicles_ = FarolGimmicks::getParameters<double>(nh_private_, "dist_inter_vehicles", 15);
-  vehicle_id_ = FarolGimmicks::getParameters<int>(nh_private_, "mission_planner/vehicle_id", 1);
+  vehicle_id_ = FarolGimmicks::getParameters<int>(nh_private_, "mission_planner/vehicle_id", 2);
   timeout_ack_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/timeout_ack", 120);
 }
 
