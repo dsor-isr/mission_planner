@@ -1,2 +1,2 @@
-int32 vehicle_ID
+int8 vehicle_ID
 bool started_ack

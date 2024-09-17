@@ -1,5 +1,5 @@
 mission_planner/mInterestZone interest_zone
-int32 ID0
-int32 ID1
-int32 ID2
-int32 ID3
+int8 ID0
+int8 ID1
+int8 ID2
+int8 ID3
