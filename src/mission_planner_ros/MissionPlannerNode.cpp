@@ -159,7 +159,7 @@ void MissionPlannerNode::newIZMissionZoneAcommsCallback(const mission_planner::m
   mission_started_ack_pub_.publish(ack_msg);
 }
 
-void MissionPlannerNode::beingScannedAcommsCallback(const std_msgs::Empty &msg) {
+void MissionPlannerNode::beingScannedAcommsCallback(const std_msgs::Bool &msg) {
   // if we are being scanned, send back a message saying we want to be a part of the mission
   // with our vehicle ID
 
@@ -176,11 +176,12 @@ void MissionPlannerNode::vehicleReadyAcommsCallback(const std_msgs::Int8 &msg) {
 
 void MissionPlannerNode::stopParticipatingVehiclesPF() {
   // make all participating vehicles publish Flag 0
-  std_msgs::Empty empty_msg;
-  stop_all_pf_pub_.publish(empty_msg);
+  std_msgs::Bool bool_msg;
+  bool_msg.data = true;
+  stop_all_pf_pub_.publish(bool_msg);
 }
 
-void MissionPlannerNode::stopPFAcomms(const std_msgs::Empty &msg) {
+void MissionPlannerNode::stopPFAcomms(const std_msgs::Bool &msg) {
   // publish Flag 0 to stop PF if it is running
   std_msgs::Int8 new_msg;
   new_msg.data = 0;
@@ -309,7 +310,7 @@ void MissionPlannerNode::initializePublishers() {
       FarolGimmicks::getParameters<std::string>(
           nh_private_, "topics/publishers/ready_for_mission", "dummy"), 1);
 
-  stop_all_pf_pub_ = nh_private_.advertise<std_msgs::Empty>(
+  stop_all_pf_pub_ = nh_private_.advertise<std_msgs::Bool>(
       FarolGimmicks::getParameters<std::string>(
           nh_private_, "topics/publishers/stop_all_pf", "dummy"), 1);
 

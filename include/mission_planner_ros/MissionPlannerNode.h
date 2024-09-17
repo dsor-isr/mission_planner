@@ -154,9 +154,9 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   void stateCallback(const auv_msgs::NavigationStatus &msg);
   void interestZoneCallback(const mission_planner::mInterestZone &msg);
   void newIZMissionZoneAcommsCallback(const mission_planner::mNewIZMission &msg);
-  void beingScannedAcommsCallback(const std_msgs::Empty &msg);
+  void beingScannedAcommsCallback(const std_msgs::Bool &msg);
   void vehicleReadyAcommsCallback(const std_msgs::Int8 &msg);
-  void stopPFAcomms(const std_msgs::Empty &msg);
+  void stopPFAcomms(const std_msgs::Bool &msg);
   void missionStartedAckAcommsCallback(const mission_planner::mMissionStartedAck &msg);
   
 
