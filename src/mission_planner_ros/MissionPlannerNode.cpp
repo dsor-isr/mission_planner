@@ -53,7 +53,7 @@ void MissionPlannerNode::loadParams() {
   path_speed_ = FarolGimmicks::getParameters<double>(nh_private_, "path_speed", 0.7);
   resolution_ = FarolGimmicks::getParameters<double>(nh_private_, "resolution", 10);
   dist_inter_vehicles_ = FarolGimmicks::getParameters<double>(nh_private_, "dist_inter_vehicles", 15);
-  vehicle_id_ = FarolGimmicks::getParameters<int>(nh_private_, "mission_planner/vehicle_id", 1);
+  vehicle_id_ = FarolGimmicks::getParameters<int>(nh_private_, "mission_planner/vehicle_id", 2);
   timeout_ack_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/timeout_ack", 120);
 }
 
@@ -112,9 +112,9 @@ void MissionPlannerNode::interestZoneCallback(const mission_planner::mInterestZo
   new_mission_msg.interest_zone = msg;
 
   new_mission_msg.ID0 = ids[0];
-  new_mission_msg.ID1 = (ids.size() > 1) ? -1 : ids[1];
-  new_mission_msg.ID2 = (ids.size() > 2) ? -1 : ids[2];
-  new_mission_msg.ID3 = (ids.size() > 3) ? -1 : ids[3];
+  new_mission_msg.ID1 = (ids.size() < 2) ? -1 : ids[1];
+  new_mission_msg.ID2 = (ids.size() < 3) ? -1 : ids[2];
+  new_mission_msg.ID3 = (ids.size() < 4) ? -1 : ids[3];
 
   // publish message
   ROS_WARN_STREAM("Interest Zone sent to other vehicles.");
