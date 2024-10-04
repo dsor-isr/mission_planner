@@ -47,12 +47,12 @@ void MissionPlannerNode::loadParams() {
   ROS_INFO("Load the MissionPlannerNode parameters");
 
   p_node_frequency_ = FarolGimmicks::getParameters<double>(nh_private_, "node_frequency", 5);
-  path_orientation_ = FarolGimmicks::getParameters<int>(nh_private_, "path_orientation", 1);
-  path_type_ = FarolGimmicks::getParameters<std::string>(nh_private_, "path_type", "lawnmower_normal");
-  min_turning_radius_ = FarolGimmicks::getParameters<double>(nh_private_, "min_turning_radius", 50);
-  path_speed_ = FarolGimmicks::getParameters<double>(nh_private_, "path_speed", 0.7);
-  resolution_ = FarolGimmicks::getParameters<double>(nh_private_, "resolution", 10);
-  dist_inter_vehicles_ = FarolGimmicks::getParameters<double>(nh_private_, "dist_inter_vehicles", 15);
+  path_orientation_ = FarolGimmicks::getParameters<int>(nh_private_, "mission_planner/path_orientation", 1);
+  path_type_ = FarolGimmicks::getParameters<std::string>(nh_private_, "mission_planner/path_type", "lawnmower_normal");
+  min_turning_radius_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/min_turning_radius", 50);
+  path_speed_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/path_speed", 0.7);
+  resolution_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/resolution", 10);
+  dist_inter_vehicles_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/dist_inter_vehicles", 15);
   vehicle_id_ = FarolGimmicks::getParameters<int>(nh_private_, "mission_planner/vehicle_id", 2);
   timeout_ack_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/timeout_ack", 120);
 }

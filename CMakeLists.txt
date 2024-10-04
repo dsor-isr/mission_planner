@@ -18,6 +18,10 @@ find_package(catkin
 # Generate messages in the 'msg' folder
 add_message_files(
 	DIRECTORY msg
+  # FILES
+  # mInterestZone.msg
+  # mMissionStartedAck.msg
+  # mNewIZMission.msg
 )
 
 add_service_files(
