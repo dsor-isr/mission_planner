@@ -74,9 +74,10 @@ bool MissionPlannerNode::interestZoneService(mission_planner::InterestZone::Requ
                                         ids[0], -1, -1, -1, dist_inter_vehicles_,
                                         path_orientation_, veh_pos_, min_turning_radius_, resolution_,
                                         path_type_, path_speed_, mission_string_pub_, path_post_rotation_,
-                                        true);
+                                        req.start_mission);
   res.success = true;
-  res.message = "Started new PF Mission on interest zone.";
+  res.message = req.start_mission ? "Started new PF Mission on interest zone."
+                                  : "Wrote mission file to home dir without actually starting a PF Mission.";
   return true;
 }
 
