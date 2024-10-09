@@ -8,6 +8,7 @@
 #include <std_msgs/Float64.h>
 #include <ros/ros.h>
 #include <fstream>
+#include <boost/regex.hpp>
 
 class MissionPlannerAlgorithm {
   public:
@@ -33,7 +34,7 @@ class MissionPlannerAlgorithm {
                          int ID0, int ID1, int ID2, int ID3, double dist_inter_vehicles,
                          int path_orientation, std::vector<double> vehicle_pos,
                          double min_turn_radius, double resolution, 
-                         std::string path_type, double velocity, ros::Publisher mission_string_pub,
+                         std::string path_type, double velocity, ros::Publisher mission_string_pub, double path_post_rotation,
                          bool publish);
 
   private:
@@ -67,12 +68,19 @@ class MissionPlannerAlgorithm {
                                 double min_turn_radius, double resolution, 
                                 std::string path_type, double velocity);
 
+    void rotatePoint(std::string &x_coord, std::string &y_coord, 
+                                 double x_center, double y_center, double x_path_offset, double y_path_offset, 
+                                 double x_path_offset_new, double y_path_offset_new, double angle);
+    
+    std::string rotateMissionPath(const std::string &mission, const double x_center,
+                                  const double y_center, double path_post_rotation);
+
     std::string getNewMissionString(double north_min, double north_max, double east_min, double east_max,
                                     std::vector<int> ids, double dist_inter_vehicles,
                                     int path_orientation, std::vector<double> vehicle_pos,
                                     double min_turn_radius, double resolution,
-                                    std::string path_type, double velocity);
-                              
+                                    std::string path_type, double velocity, double path_post_rotation);
+                          
     std::string getFormationLine(std::vector<int> ids, double dist_inter_vehicles);
 
     std::string stampToString(const ros::Time& stamp, const std::string);

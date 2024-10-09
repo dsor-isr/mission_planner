@@ -224,11 +224,126 @@ std::string MissionPlannerAlgorithm::getFormationLine(std::vector<int> ids, doub
   return formation_line;
 }
 
+void MissionPlannerAlgorithm::rotatePoint(std::string &x_coord, std::string &y_coord, 
+                                          double x_center, double y_center, double x_path_offset, double y_path_offset, 
+                                          double x_path_offset_new, double y_path_offset_new, double angle) {
+  // bring point to origin of the axes
+  double x = std::stod(x_coord) + x_path_offset - x_center;
+  double y = std::stod(y_coord) + y_path_offset - y_center;
+
+  // apply rotation matrix
+  double x_new = x * cos(angle) - y * sin(angle);
+  double y_new = x * sin(angle) + y * cos(angle);
+
+  // bring point back to original center
+  x_coord = std::to_string(x_new + x_center - x_path_offset_new);
+  y_coord = std::to_string(y_new + y_center - y_path_offset_new);
+}
+
+std::string MissionPlannerAlgorithm::rotateMissionPath(const std::string &mission, const double x_center, 
+                                                       const double y_center, double path_post_rotation) {
+  int counter = 0; // counnter for while function
+  
+  // position of the path frame's origin on the inertial frame
+  double x_path_offset = 0;
+  double y_path_offset = 0;
+
+  // position of the path_frame's origin on the inertial frame after rotation around the center of the interest zone
+  double x_path_offset_new = 0;
+  double y_path_offset_new = 0;
+
+  std::string rotated_mission = "";
+  
+  std::istringstream stream(mission);  // Create a stream from the string
+  std::string line;
+
+  // regex match patterns
+  static const boost::regex pattern_path_center("^([^ ]*) ([^ ]*)$");
+  static const boost::regex pattern_line("^LINE ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*)");
+  static const boost::regex pattern_arc("^ARC ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*)");
+
+  boost::smatch matches;
+
+  // read each line from mission and create rotated mission
+  while (std::getline(stream, line)) {
+    if (line.rfind("LINE", 0) == 0) { // if line starts with "LINE"
+      // # LINE xInit yInit xEnd yEnd velocity <nVehicle> <gamma> <user data>
+
+      // get matches according to pattern
+      boost::regex_search(line, matches, pattern_line);
+
+      std::string xInit = matches[1].str();
+      std::string yInit = matches[2].str();
+      std::string xEnd = matches[3].str();
+      std::string yEnd = matches[4].str();
+
+      rotatePoint(xInit, yInit, x_center, y_center, x_path_offset, y_path_offset, x_path_offset_new, y_path_offset_new, path_post_rotation/180*M_PI);
+      rotatePoint(xEnd, yEnd, x_center, y_center, x_path_offset, y_path_offset, x_path_offset_new, y_path_offset_new, path_post_rotation/180*M_PI);
+      
+      // reconstruct line, with rotated points
+      rotated_mission += "LINE " + xInit + " " + yInit + " " + xEnd + " " + yEnd;
+      
+      for (int i = 5; i < (int)matches.size(); i++) {
+        rotated_mission += " " + matches[i].str();
+      }
+
+      rotated_mission += "\n";
+
+    } else if (line.rfind("ARC", 0) == 0) { // if line starts with "ARC"
+      // # ARC xInit yInit xCenter yCenter xEnd yEnd velocity adirection radius <nVehicle> <gamma> <user data>
+
+      // get matches according to pattern
+      boost::regex_search(line, matches, pattern_arc);
+
+      std::string xInit = matches[1].str();
+      std::string yInit = matches[2].str();
+      std::string xCenter = matches[3].str();
+      std::string yCenter = matches[4].str();
+      std::string xEnd = matches[5].str();
+      std::string yEnd = matches[6].str();
+
+      rotatePoint(xInit, yInit, x_center, y_center, x_path_offset, y_path_offset, x_path_offset_new, y_path_offset_new, path_post_rotation/180*M_PI);
+      rotatePoint(xCenter, yCenter, x_center, y_center, x_path_offset, y_path_offset, x_path_offset_new, y_path_offset_new, path_post_rotation/180*M_PI);
+      rotatePoint(xEnd, yEnd, x_center, y_center, x_path_offset, y_path_offset, x_path_offset_new, y_path_offset_new, path_post_rotation/180*M_PI);
+      
+      // reconstruct line, with rotated points
+      rotated_mission += "ARC " + xInit + " " + yInit + " " + xCenter + " " + yCenter + " " + xEnd + " " + yEnd;
+      
+      for (int i = 7; i < (int)matches.size(); i++) {
+        rotated_mission += " " + matches[i].str();
+      }
+
+      rotated_mission += "\n";
+
+    } else if (counter == 1){ // second line of file which contains offset for path coordinates
+      // get matches according to pattern
+      boost::regex_search(line, matches, pattern_path_center);
+
+      x_path_offset = std::stod(matches[1].str());
+      y_path_offset = std::stod(matches[2].str());
+
+      // bring path offset to origin of the axes, rotate it according to the path_post_rotation angle and bring it back to the original position
+      x_path_offset_new = ((x_path_offset - x_center) * cos(path_post_rotation) - (y_path_offset - y_center) * sin(path_post_rotation)) + x_center;
+      y_path_offset_new = ((x_path_offset - x_center) * sin(path_post_rotation) + (y_path_offset - y_center) * cos(path_post_rotation)) + y_center;
+
+      rotated_mission += std::to_string(x_path_offset_new) + " " + std::to_string(y_path_offset_new) + "\n";
+
+    } else { // if line does not start with "LINE" or "ARC" and is not the second line
+      rotated_mission += line + "\n";
+    }
+
+    // increase counter for while function
+    counter += 1;
+  }
+
+  return rotated_mission;
+}
+
 std::string MissionPlannerAlgorithm::getNewMissionString(double north_min, double north_max, double east_min, double east_max,
                                                          std::vector<int> ids, double dist_inter_vehicles,
                                                          int path_orientation, std::vector<double> vehicle_pos,
                                                          double min_turn_radius, double resolution, 
-                                                         std::string path_type, double velocity) {
+                                                         std::string path_type, double velocity, double path_post_rotation) {
   // create new string
   std::string mission = mission_start_;
 
@@ -250,8 +365,7 @@ std::string MissionPlannerAlgorithm::getNewMissionString(double north_min, doubl
                              path_orientation, vehicle_pos,
                              min_turn_radius, resolution, path_type, velocity);
 
-
-  return mission;
+  return rotateMissionPath(mission, (east_max + east_min)/2, (north_max + north_min)/2, path_post_rotation);
 }
 
 std::string MissionPlannerAlgorithm::stampToString(const ros::Time& stamp, const std::string format="%Y-%m-%d-%H-%M-%S") {
@@ -269,7 +383,7 @@ void MissionPlannerAlgorithm::startNewMission(double north_min, double north_max
                                               int ID0, int ID1, int ID2, int ID3, double dist_inter_vehicles,
                                               int path_orientation, std::vector<double> vehicle_pos,
                                               double min_turn_radius, double resolution,
-                                              std::string path_type, double velocity, ros::Publisher mission_string_pub,
+                                              std::string path_type, double velocity, ros::Publisher mission_string_pub, double path_post_rotation,
                                               bool publish) {
 
   // create set with non negative ids
@@ -294,7 +408,7 @@ void MissionPlannerAlgorithm::startNewMission(double north_min, double north_max
                                         ids, dist_inter_vehicles,
                                         path_orientation, vehicle_pos,
                                         min_turn_radius, resolution, 
-                                        path_type, velocity);
+                                        path_type, velocity, path_post_rotation);
 
   ROS_INFO("\nMISSION FILE:\n");
   std::cout << mission_string_;

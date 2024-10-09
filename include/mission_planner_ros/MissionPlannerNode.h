@@ -84,6 +84,7 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
 
   // @.@ Parameters from Yaml
   double p_node_frequency_;   ///< node frequency
+  double path_post_rotation_;
   int path_orientation_;
   std::string path_type_;
   double min_turning_radius_;

@@ -47,14 +47,15 @@ void MissionPlannerNode::loadParams() {
   ROS_INFO("Load the MissionPlannerNode parameters");
 
   p_node_frequency_ = FarolGimmicks::getParameters<double>(nh_private_, "node_frequency", 5);
+  path_post_rotation_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/path_post_rotation", 0.0);
   path_orientation_ = FarolGimmicks::getParameters<int>(nh_private_, "mission_planner/path_orientation", 1);
   path_type_ = FarolGimmicks::getParameters<std::string>(nh_private_, "mission_planner/path_type", "lawnmower_normal");
-  min_turning_radius_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/min_turning_radius", 50);
+  min_turning_radius_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/min_turning_radius", 50.0);
   path_speed_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/path_speed", 0.7);
-  resolution_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/resolution", 10);
-  dist_inter_vehicles_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/dist_inter_vehicles", 15);
+  resolution_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/resolution", 10.0);
+  dist_inter_vehicles_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/dist_inter_vehicles", 15.0);
   vehicle_id_ = FarolGimmicks::getParameters<int>(nh_private_, "mission_planner/vehicle_id", 2);
-  timeout_ack_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/timeout_ack", 120);
+  timeout_ack_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/timeout_ack", 120.0);
 }
 
 bool MissionPlannerNode::interestZoneService(mission_planner::InterestZone::Request &req,
@@ -72,7 +73,7 @@ bool MissionPlannerNode::interestZoneService(mission_planner::InterestZone::Requ
   mission_planner_alg_->startNewMission(req.northing_min, req.northing_max, req.easting_min, req.easting_max,
                                         ids[0], -1, -1, -1, dist_inter_vehicles_,
                                         path_orientation_, veh_pos_, min_turning_radius_, resolution_,
-                                        path_type_, path_speed_, mission_string_pub_,
+                                        path_type_, path_speed_, mission_string_pub_, path_post_rotation_,
                                         true);
   res.success = true;
   res.message = "Started new PF Mission on interest zone.";
@@ -152,7 +153,7 @@ void MissionPlannerNode::newIZMissionZoneAcommsCallback(const mission_planner::m
                                             msg.interest_zone.easting_min, msg.interest_zone.easting_max,
                                           msg.ID0, msg.ID1, msg.ID2, msg.ID3, dist_inter_vehicles_,
                                           path_orientation_, veh_pos_, min_turning_radius_, resolution_,
-                                          path_type_, path_speed_, mission_string_pub_,
+                                          path_type_, path_speed_, mission_string_pub_, path_post_rotation_,
                                           true);
     
     // send acoustic message back saying PF HAS started
@@ -220,7 +221,7 @@ void MissionPlannerNode::missionStartedAckAcommsCallback(const mission_planner::
                                             last_IZ_mission_.interest_zone.easting_min, last_IZ_mission_.interest_zone.easting_max,
                                           last_IZ_mission_.ID0, last_IZ_mission_.ID1, last_IZ_mission_.ID2, last_IZ_mission_.ID3, dist_inter_vehicles_,
                                           path_orientation_, veh_pos_, min_turning_radius_, resolution_,
-                                          path_type_, path_speed_, mission_string_pub_,
+                                          path_type_, path_speed_, mission_string_pub_, path_post_rotation_,
                                           false);
 
     // no longer waiting for acks
@@ -235,7 +236,9 @@ bool MissionPlannerNode::changeConfigsService(mission_planner::Configs::Request 
       (req.path_type != "lawnmower_normal" && req.path_type != "lawnmower_encircling") ||
       (req.min_turning_radius < 0) ||
       (req.path_speed <= 0) ||
-      (req.resolution < 0)) {
+      (req.resolution < 0) ||
+      (req.dist_inter_vehicles <= 0) ||
+      (req.timeout_ack <= 0)) {
     ROS_WARN_STREAM("Incorrect configurations for Mission Planner.");
     res.success = false;
     res.message = "Incorrect configurations for Mission Planner.";
@@ -243,11 +246,14 @@ bool MissionPlannerNode::changeConfigsService(mission_planner::Configs::Request 
   }
   
   // update configs
+  path_post_rotation_ = req.path_post_rotation;
   path_orientation_ = req.path_orientation;
   path_type_ = req.path_type;
   min_turning_radius_ = req.min_turning_radius;
   path_speed_ = req.path_speed;
   resolution_ = req.resolution;
+  dist_inter_vehicles_ = req.dist_inter_vehicles;
+  timeout_ack_ = req.timeout_ack;
   ROS_INFO("Updated configurations for Mission Planner.");
   res.success = true;
   res.message = "Updated configurations for Mission Planner.";
