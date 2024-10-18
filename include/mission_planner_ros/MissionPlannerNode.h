@@ -9,6 +9,8 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
  #include <std_msgs/Bool.h>
  #include <std_msgs/Empty.h>
  #include <std_msgs/Int8.h>
+ #include <std_msgs/Float32MultiArray.h>
+ #include <farol_msgs/mState.h>
  #include <vector>
  #include <ros/ros.h> 
 
@@ -69,6 +71,8 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   ros::Subscriber vehicle_ready_acomms_sub_;
   ros::Subscriber mission_started_ack_acomms_sub_;
   ros::Subscriber stop_pf_sub_;
+  ros::Subscriber glider0_state_usbl_meas_sub_;
+  ros::Subscriber glider1_state_usbl_meas_sub_;
 
 
  	// @.@ Publishers
@@ -78,12 +82,19 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   ros::Publisher ready_for_mission_pub_;
   ros::Publisher stop_all_pf_pub_;
   ros::Publisher status_flag_pub_;
+  ros::Publisher waypoints_pub_;
 
  	// @.@ Timer
  	ros::Timer timer_;           ///< ROS Timer
+ 	ros::Timer timer_waypoints_;           ///< ROS Timer
+
+  // Constants
+  const double MAX_VALUE = 10000000;
+  const std::vector<double> max_coords_ = {MAX_VALUE, MAX_VALUE};
 
   // @.@ Parameters from Yaml
   double p_node_frequency_;   ///< node frequency
+  double waypoints_update_interval_;
   double path_post_rotation_;
   int path_orientation_;
   std::string path_type_;
@@ -93,15 +104,22 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   double dist_inter_vehicles_;
   int vehicle_id_; // id for paths with multiple vehicles (normally in a CPF situation)
   double timeout_ack_;
+  bool send_waypoints_auvs_following_;
+  double wp_distance_;
 
  	// @.@ Problem variables
   std::vector<double> veh_pos_ = {0.0, 0.0};
   std::set<int> participating_veh_;
-  std::set<int> mission_started_veh_; // set of vehicle IDs for which the mission has stated successfully
+  std::set<int> mission_started_veh_; // set of vehicle IDs for which the mission has started successfully
   mission_planner::mNewIZMission last_IZ_mission_;
-  bool waiting_for_mission_started_ack = false;
-  double waiting_time_start = 0;
-  double time = 0;
+  bool waiting_for_mission_started_ack_ = false;
+  double waiting_time_start_ = 0;
+  double time_ = 0;
+  std::string mission_string_;
+  bool mission_started_ = false;
+  double path_main_orientation_ = 0.0;
+  std::vector<double> glider0_State_ = {MAX_VALUE, MAX_VALUE};
+  std::vector<double> glider1_State_ = {MAX_VALUE, MAX_VALUE};
  	
 
   // @.@ Encapsulation the gory details of initializing subscribers, publishers and services
@@ -159,6 +177,9 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   void vehicleReadyAcommsCallback(const std_msgs::Int8 &msg);
   void stopPFAcomms(const std_msgs::Bool &msg);
   void missionStartedAckAcommsCallback(const mission_planner::mMissionStartedAck &msg);
+  void Glider0StateUsblMeas(const farol_msgs::mState &msg);
+  void Glider1StateUsblMeas(const farol_msgs::mState &msg);
+  double getPathMainOrientationFromMissionString(const std::string &mission_string);
   
 
   /* -------------------------------------------------------------------------*/
@@ -169,6 +190,8 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
    */
   /* -------------------------------------------------------------------------*/
   void timerIterCallback(const ros::TimerEvent& event);
+
+  void timerWaypointsCallback(const ros::TimerEvent &event);
 
 
 

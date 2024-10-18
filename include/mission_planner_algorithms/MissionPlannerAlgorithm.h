@@ -6,6 +6,7 @@
 
 #include <std_msgs/String.h>
 #include <std_msgs/Float64.h>
+#include <std_msgs/Float64MultiArray.h>
 #include <ros/ros.h>
 #include <fstream>
 #include <boost/regex.hpp>
@@ -30,12 +31,15 @@ class MissionPlannerAlgorithm {
     /* -------------------------------------------------------------------------*/
     ~MissionPlannerAlgorithm();
 
-    void startNewMission(double north_min, double north_max, double east_min, double east_max,
-                         int ID0, int ID1, int ID2, int ID3, double dist_inter_vehicles,
-                         int path_orientation, std::vector<double> vehicle_pos,
-                         double min_turn_radius, double resolution, 
-                         std::string path_type, double velocity, ros::Publisher mission_string_pub, double path_post_rotation,
-                         bool publish);
+    std::string startNewMission(double north_min, double north_max, double east_min, double east_max,
+                                int ID0, int ID1, int ID2, int ID3, double dist_inter_vehicles,
+                                int path_orientation, std::vector<double> vehicle_pos,
+                                double min_turn_radius, double resolution, 
+                                std::string path_type, double velocity, ros::Publisher mission_string_pub, double path_post_rotation,
+                                bool publish);
+
+    void sendWaypointsToSailboat(std::vector<double> gliders_avg, double path_main_orientation, 
+                                 ros::Publisher sailboat_waypoints_pub, double wp_distance);
 
   private:
 

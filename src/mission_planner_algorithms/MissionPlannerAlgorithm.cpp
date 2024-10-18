@@ -379,12 +379,12 @@ std::string MissionPlannerAlgorithm::stampToString(const ros::Time& stamp, const
   return std::string(output);
 }
 
-void MissionPlannerAlgorithm::startNewMission(double north_min, double north_max, double east_min, double east_max,
-                                              int ID0, int ID1, int ID2, int ID3, double dist_inter_vehicles,
-                                              int path_orientation, std::vector<double> vehicle_pos,
-                                              double min_turn_radius, double resolution,
-                                              std::string path_type, double velocity, ros::Publisher mission_string_pub, double path_post_rotation,
-                                              bool publish) {
+std::string MissionPlannerAlgorithm::startNewMission(double north_min, double north_max, double east_min, double east_max,
+                                                     int ID0, int ID1, int ID2, int ID3, double dist_inter_vehicles,
+                                                     int path_orientation, std::vector<double> vehicle_pos,
+                                                     double min_turn_radius, double resolution,
+                                                     std::string path_type, double velocity, ros::Publisher mission_string_pub, double path_post_rotation,
+                                                     bool publish) {
 
   // create set with non negative ids
   std::set<int> ids_set;
@@ -432,4 +432,21 @@ void MissionPlannerAlgorithm::startNewMission(double north_min, double north_max
     myfile.close();
   }
 
+  return mission_string_;
+}
+
+void MissionPlannerAlgorithm::sendWaypointsToSailboat(std::vector<double> gliders_avg, double path_main_orientation, 
+                                                      ros::Publisher sailboat_waypoints_pub, double wp_distance) {
+  // waypoints w1, w2
+  std::vector<double> w1{gliders_avg[0] + wp_distance*cos(path_main_orientation/180*M_PI), 
+                        gliders_avg[1] + wp_distance*sin(path_main_orientation/180*M_PI)}, 
+                     w2{gliders_avg[0] - wp_distance*cos(path_main_orientation/180*M_PI), 
+                        gliders_avg[1] - wp_distance*sin(path_main_orientation/180*M_PI)};
+
+  std::vector<double> wps{w1[0], w1[1], w2[0], w2[1]};
+
+  std_msgs::Float64MultiArray msg;
+  msg.data = wps;
+
+  sailboat_waypoints_pub.publish(msg);
 }

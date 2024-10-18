@@ -32,7 +32,9 @@ MissionPlannerNode::~MissionPlannerNode() {
   new_iz_mission_acomms_sub_.shutdown();
   being_scanned_acomms_sub_.shutdown();
   mission_started_ack_acomms_sub_.shutdown();
-  
+  stop_pf_sub_.shutdown();
+  glider0_state_usbl_meas_sub_.shutdown();  
+  glider1_state_usbl_meas_sub_.shutdown();  
 
   // +.+ stop timer
   timer_.stop();
@@ -47,6 +49,7 @@ void MissionPlannerNode::loadParams() {
   ROS_INFO("Load the MissionPlannerNode parameters");
 
   p_node_frequency_ = FarolGimmicks::getParameters<double>(nh_private_, "node_frequency", 5);
+  waypoints_update_interval_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/waypoints_update_interval", 360);
   path_post_rotation_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/path_post_rotation", 0.0);
   path_orientation_ = FarolGimmicks::getParameters<int>(nh_private_, "mission_planner/path_orientation", 1);
   path_type_ = FarolGimmicks::getParameters<std::string>(nh_private_, "mission_planner/path_type", "lawnmower_normal");
@@ -56,6 +59,8 @@ void MissionPlannerNode::loadParams() {
   dist_inter_vehicles_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/dist_inter_vehicles", 15.0);
   vehicle_id_ = FarolGimmicks::getParameters<int>(nh_private_, "mission_planner/vehicle_id", 2);
   timeout_ack_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/timeout_ack", 120.0);
+  send_waypoints_auvs_following_ = FarolGimmicks::getParameters<bool>(nh_private_, "mission_planner/send_waypoints_auvs_following", false);
+  wp_distance_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/wp_distance", 40);
 }
 
 bool MissionPlannerNode::interestZoneService(mission_planner::InterestZone::Request &req,
@@ -70,11 +75,11 @@ bool MissionPlannerNode::interestZoneService(mission_planner::InterestZone::Requ
   std::vector<int> ids = {vehicle_id_};
 
   // start new mission according to zone of interest published
-  mission_planner_alg_->startNewMission(req.northing_min, req.northing_max, req.easting_min, req.easting_max,
-                                        ids[0], -1, -1, -1, dist_inter_vehicles_,
-                                        path_orientation_, veh_pos_, min_turning_radius_, resolution_,
-                                        path_type_, path_speed_, mission_string_pub_, path_post_rotation_,
-                                        req.start_mission);
+  mission_string_ = mission_planner_alg_->startNewMission(req.northing_min, req.northing_max, req.easting_min, req.easting_max,
+                                                          ids[0], -1, -1, -1, dist_inter_vehicles_,
+                                                          path_orientation_, veh_pos_, min_turning_radius_, resolution_,
+                                                          path_type_, path_speed_, mission_string_pub_, path_post_rotation_,
+                                                          req.start_mission);
   res.success = true;
   res.message = req.start_mission ? "Started new PF Mission on interest zone."
                                   : "Wrote mission file to home dir without actually starting a PF Mission.";
@@ -123,8 +128,8 @@ void MissionPlannerNode::interestZoneCallback(const mission_planner::mInterestZo
   new_iz_mission_pub_.publish(new_mission_msg);
 
   // update flag and save new instant of time
-  waiting_for_mission_started_ack = true;
-  waiting_time_start = ros::Time::now().toSec();
+  waiting_for_mission_started_ack_ = true;
+  waiting_time_start_ = ros::Time::now().toSec();
 
   // update last received mission message
   last_IZ_mission_.interest_zone.northing_min = new_mission_msg.interest_zone.northing_min;
@@ -150,12 +155,12 @@ void MissionPlannerNode::newIZMissionZoneAcommsCallback(const mission_planner::m
 
   } else { // everything ok, let's start PF
     // start new mission according to zone of interest published
-    mission_planner_alg_->startNewMission(msg.interest_zone.northing_min, msg.interest_zone.northing_max, 
-                                            msg.interest_zone.easting_min, msg.interest_zone.easting_max,
-                                          msg.ID0, msg.ID1, msg.ID2, msg.ID3, dist_inter_vehicles_,
-                                          path_orientation_, veh_pos_, min_turning_radius_, resolution_,
-                                          path_type_, path_speed_, mission_string_pub_, path_post_rotation_,
-                                          true);
+    mission_string_ = mission_planner_alg_->startNewMission(msg.interest_zone.northing_min, msg.interest_zone.northing_max, 
+                                                            msg.interest_zone.easting_min, msg.interest_zone.easting_max,
+                                                            msg.ID0, msg.ID1, msg.ID2, msg.ID3, dist_inter_vehicles_,
+                                                            path_orientation_, veh_pos_, min_turning_radius_, resolution_,
+                                                            path_type_, path_speed_, mission_string_pub_, path_post_rotation_,
+                                                            true);
     
     // send acoustic message back saying PF HAS started
     ack_msg.started_ack = true;
@@ -198,6 +203,37 @@ void MissionPlannerNode::stopPFAcomms(const std_msgs::Bool &msg) {
   status_flag_pub_.publish(new_msg);
 }
 
+double MissionPlannerNode::getPathMainOrientationFromMissionString(const std::string &mission_string) {
+  std::istringstream stream(mission_string);  // Create a stream from the string
+  std::string line;
+
+  // regex pattern for LINE line
+  static const boost::regex pattern_line("^LINE ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*)");
+
+  boost::smatch matches;
+
+  // read each line from mission and create rotated mission
+  while (std::getline(stream, line)) {
+    if (line.rfind("LINE", 0) == 0) { // if line starts with "LINE"
+      // # LINE xInit yInit xEnd yEnd velocity <nVehicle> <gamma> <user data>
+
+      // get matches according to pattern
+      boost::regex_search(line, matches, pattern_line);
+
+      std::string xInit = matches[1].str();
+      std::string yInit = matches[2].str();
+      std::string xEnd = matches[3].str();
+      std::string yEnd = matches[4].str();
+
+      // get line orientation
+      return atan2(std::stod(yEnd) - std::stod(yInit), std::stod(xEnd) - std::stod(xInit)) / M_PI * 180;
+    }
+  }
+
+  // if the mission has no LINE, return 0.0
+  return 0.0;
+}
+
 void MissionPlannerNode::missionStartedAckAcommsCallback(const mission_planner::mMissionStartedAck &msg) {
   // check if mission started
   if (!msg.started_ack) {
@@ -206,7 +242,7 @@ void MissionPlannerNode::missionStartedAckAcommsCallback(const mission_planner::
     // stop all PF and we're not waiting for acks anymore
     ROS_WARN_STREAM("Stopping PF for all participating vehicles (FLAG 0).");
     stopParticipatingVehiclesPF();
-    waiting_for_mission_started_ack = false;
+    waiting_for_mission_started_ack_ = false;
     return;
   }
 
@@ -218,15 +254,21 @@ void MissionPlannerNode::missionStartedAckAcommsCallback(const mission_planner::
   if (mission_started_veh_ == participating_veh_) {
     ROS_WARN_STREAM("All participating vehicles acknowledged mission start.");
     // actually doesn't "START" a new mission, just creates the mission string and writes to file, because of FALSE flag
-    mission_planner_alg_->startNewMission(last_IZ_mission_.interest_zone.northing_min, last_IZ_mission_.interest_zone.northing_max, 
-                                            last_IZ_mission_.interest_zone.easting_min, last_IZ_mission_.interest_zone.easting_max,
-                                          last_IZ_mission_.ID0, last_IZ_mission_.ID1, last_IZ_mission_.ID2, last_IZ_mission_.ID3, dist_inter_vehicles_,
-                                          path_orientation_, veh_pos_, min_turning_radius_, resolution_,
-                                          path_type_, path_speed_, mission_string_pub_, path_post_rotation_,
-                                          false);
+    mission_string_ = mission_planner_alg_->startNewMission(last_IZ_mission_.interest_zone.northing_min, last_IZ_mission_.interest_zone.northing_max, 
+                                                            last_IZ_mission_.interest_zone.easting_min, last_IZ_mission_.interest_zone.easting_max,
+                                                            last_IZ_mission_.ID0, last_IZ_mission_.ID1, last_IZ_mission_.ID2, last_IZ_mission_.ID3, dist_inter_vehicles_,
+                                                            path_orientation_, veh_pos_, min_turning_radius_, resolution_,
+                                                            path_type_, path_speed_, mission_string_pub_, path_post_rotation_,
+                                                            false);
 
     // no longer waiting for acks
-    waiting_for_mission_started_ack = false;
+    waiting_for_mission_started_ack_ = false;
+
+    // set flag to true to signify PF started for all participating vehicles
+    mission_started_ = true;
+
+    // compute path main orientation from new mission string
+    path_main_orientation_ = getPathMainOrientationFromMissionString(mission_string_);
   }
 }
 
@@ -261,6 +303,13 @@ bool MissionPlannerNode::changeConfigsService(mission_planner::Configs::Request 
   return true;
 }
 
+void MissionPlannerNode::Glider0StateUsblMeas(const farol_msgs::mState &msg) {
+  glider0_State_ = {msg.X, msg.Y};
+}
+
+void MissionPlannerNode::Glider1StateUsblMeas(const farol_msgs::mState &msg) {
+  glider1_State_ = {msg.X, msg.Y};
+}
 
 // @.@ Member helper function to set up subscribers
 void MissionPlannerNode::initializeSubscribers() {
@@ -300,6 +349,16 @@ void MissionPlannerNode::initializeSubscribers() {
     "topics/subscribers/stop_pf", "dummy"),
     10, &MissionPlannerNode::stopPFAcomms, this);
 
+  // if sending waypoints using CANARIAS ist_ros package is enabled
+  if (send_waypoints_auvs_following_) {
+    glider0_state_usbl_meas_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
+      "topics/subscribers/glider0_state_usbl_meas", "dummy"),
+      10, &MissionPlannerNode::Glider0StateUsblMeas, this);
+
+    glider1_state_usbl_meas_sub_ = nh_private_.subscribe(FarolGimmicks::getParameters<std::string>(nh_private_, 
+      "topics/subscribers/glider0_state_usbl_meas", "dummy"),
+      10, &MissionPlannerNode::Glider1StateUsblMeas, this);
+  }
 }
 
 
@@ -331,6 +390,10 @@ void MissionPlannerNode::initializePublishers() {
   status_flag_pub_ = nh_private_.advertise<std_msgs::Int8>(
       FarolGimmicks::getParameters<std::string>(
           nh_private_, "topics/publishers/status_flag", "dummy"), 1);
+
+  waypoints_pub_ = nh_private_.advertise<std_msgs::Float64MultiArray>(
+      FarolGimmicks::getParameters<std::string>(
+          nh_private_, "topics/publishers/waypoints", "dummy"), 1);
 }
 
 
@@ -351,6 +414,7 @@ void MissionPlannerNode::initializeServices() {
 // @.@ Member helper function to set up the timer
 void MissionPlannerNode::initializeTimer() {
   timer_ =nh_.createTimer(ros::Duration(1.0/p_node_frequency_), &MissionPlannerNode::timerIterCallback, this);
+  timer_waypoints_ =nh_.createTimer(ros::Duration(waypoints_update_interval_), &MissionPlannerNode::timerWaypointsCallback, this);
 }
 
 
@@ -358,19 +422,42 @@ void MissionPlannerNode::initializeTimer() {
 void MissionPlannerNode::timerIterCallback(const ros::TimerEvent &event) {
   
   // if waiting for ack from participating vehicles
-  if (waiting_for_mission_started_ack) {
-    time = ros::Time::now().toSec();
+  if (waiting_for_mission_started_ack_) {
+    time_ = ros::Time::now().toSec();
 
     // if we have been waiting for more than timeout seconds, abort mission and send flag 0 to all vehicles
-    if (time - waiting_time_start > timeout_ack_) {
+    if (time_ - waiting_time_start_ > timeout_ack_) {
       // stop all PF and we're not waiting for acks anymore
       ROS_WARN_STREAM("Stopping PF for all participating vehicles (FLAG 0).");
       stopParticipatingVehiclesPF();
-      waiting_for_mission_started_ack = false;
+      mission_started_ = false;
+
+      // if sending waypoints using CANARIAS ist_ros package is enabled
+      if (send_waypoints_auvs_following_) {
+        // reset saved positions for participating vehicles
+        glider0_State_ = max_coords_;
+        glider1_State_ = max_coords_;
+      }
+      
+      waiting_for_mission_started_ack_ = false;
     }
   }
 }
 
+void MissionPlannerNode::timerWaypointsCallback(const ros::TimerEvent &event) {
+  // if sending waypoints using CANARIAS ist_ros package is enabled AND
+  // if path following has successfully started for all participating vehicles
+  if (send_waypoints_auvs_following_ && mission_started_) {
+    // if we have position from both participating vehicles (we are considering only 2 AUVs/Gliders)
+    if (glider0_State_ != max_coords_ && glider1_State_ != max_coords_) {
+      std::vector<double> gliders_avg = {(glider0_State_[0] + glider1_State_[0])/2,
+                                         (glider0_State_[1] + glider1_State_[1])/2};
+
+      mission_planner_alg_->sendWaypointsToSailboat(gliders_avg, path_main_orientation_, waypoints_pub_, wp_distance_);
+    }
+  }
+  // ROS_WARN("timerwaypoints");
+}
 
 /*
   @.@ Main
