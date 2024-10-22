@@ -105,7 +105,10 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   int vehicle_id_; // id for paths with multiple vehicles (normally in a CPF situation)
   double timeout_ack_;
   bool send_waypoints_auvs_following_;
-  double wp_distance_;
+  double wp_distance_along_;
+  double wp_distance_cross_;
+  double wp_offset_along_;
+  double wp_offset_cross_;
 
  	// @.@ Problem variables
   std::vector<double> veh_pos_ = {0.0, 0.0};

@@ -435,15 +435,56 @@ std::string MissionPlannerAlgorithm::startNewMission(double north_min, double no
   return mission_string_;
 }
 
-void MissionPlannerAlgorithm::sendWaypointsToSailboat(std::vector<double> gliders_avg, double path_main_orientation, 
-                                                      ros::Publisher sailboat_waypoints_pub, double wp_distance) {
-  // waypoints w1, w2
-  std::vector<double> w1{gliders_avg[0] + wp_distance*cos(path_main_orientation/180*M_PI), 
-                        gliders_avg[1] + wp_distance*sin(path_main_orientation/180*M_PI)}, 
-                     w2{gliders_avg[0] - wp_distance*cos(path_main_orientation/180*M_PI), 
-                        gliders_avg[1] - wp_distance*sin(path_main_orientation/180*M_PI)};
+std::vector<double> MissionPlannerAlgorithm::computeWaypoint(const std::vector<double> ref_point,
+                                                             const std::vector<double> delta,
+                                                             const double angle) {
+  std::vector<double> wp{ref_point[0] + delta[0]*cos(angle) - delta[1]*sin(angle),
+                         ref_point[1] + delta[0]*sin(angle) + delta[1]*cos(angle)};
 
-  std::vector<double> wps{w1[0], w1[1], w2[0], w2[1]};
+  return wp;
+}
+
+void MissionPlannerAlgorithm::sendWaypointsToSailboat(std::vector<double> gliders_avg, double path_main_orientation, 
+                                                      ros::Publisher sailboat_waypoints_pub, 
+                                                      double wp_distance_along_, double wp_distance_cross_,
+                                                      double wp_offset_along_, double wp_offset_cross_) {
+  // path main orientation in rad
+  double alpha = path_main_orientation/180*M_PI;
+
+  // distances and offsets
+  double a = wp_distance_along_;
+  double c = wp_distance_cross_;
+  double a_offset = wp_offset_along_;
+  double c_offset = wp_offset_cross_;
+  
+  // waypoints w1, w2
+  // std::vector<double> w1{gliders_avg[0] + wp_distance*cos(alpha), 
+  //                       gliders_avg[1] + wp_distance*sin(alpha)}, 
+  //                    w2{gliders_avg[0] - wp_distance*cos(alpha), 
+  //                       gliders_avg[1] - wp_distance*sin(alpha)};
+
+  // std::vector<double> wps{w1[0], w1[1], w2[0], w2[1]};
+
+  // waypoints 1,2,3,4, R - 2-dim rotation matrix with angle alpha
+  //
+  // w1 = p_avg + R . | + a + a_offset |
+  //                  | + c + c_offset |
+  std::vector<double> w1 = computeWaypoint(gliders_avg, {a + a_offset, c + c_offset}, alpha);
+  //
+  // w2 = p_avg + R . | + a + a_offset |
+  //                  | - c + c_offset |
+  std::vector<double> w2 = computeWaypoint(gliders_avg, {a + a_offset, - c + c_offset}, alpha);
+  //
+  // w3 = p_avg + R . | - a + a_offset |
+  //                  | + c + c_offset |
+  std::vector<double> w3 = computeWaypoint(gliders_avg, {- a + a_offset, c + c_offset}, alpha);
+  //
+  // w4 = p_avg + R . | - a + a_offset |
+  //                  | - c + c_offset |
+  std::vector<double> w4 = computeWaypoint(gliders_avg, {- a + a_offset, - c + c_offset}, alpha);
+  
+  // build vector with all waypoints coordinates in order
+  std::vector<double> wps{w1[0], w1[1], w2[0], w2[1], w3[0], w3[1], w4[0], w4[1]};
 
   std_msgs::Float64MultiArray msg;
   msg.data = wps;

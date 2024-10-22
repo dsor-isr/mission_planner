@@ -39,7 +39,9 @@ class MissionPlannerAlgorithm {
                                 bool publish);
 
     void sendWaypointsToSailboat(std::vector<double> gliders_avg, double path_main_orientation, 
-                                 ros::Publisher sailboat_waypoints_pub, double wp_distance);
+                                 ros::Publisher sailboat_waypoints_pub, 
+                                 double wp_distance_along_, double wp_distance_cross_,
+                                 double wp_offset_along_, double wp_offset_cross_);
 
   private:
 
@@ -88,6 +90,10 @@ class MissionPlannerAlgorithm {
     std::string getFormationLine(std::vector<int> ids, double dist_inter_vehicles);
 
     std::string stampToString(const ros::Time& stamp, const std::string);
+
+    std::vector<double> computeWaypoint(const std::vector<double> ref_point,
+                                        const std::vector<double> delta,
+                                        const double angle);
 
     std::string mission_start_;
     std::string mission_string_;

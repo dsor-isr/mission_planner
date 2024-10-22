@@ -60,7 +60,10 @@ void MissionPlannerNode::loadParams() {
   vehicle_id_ = FarolGimmicks::getParameters<int>(nh_private_, "mission_planner/vehicle_id", 2);
   timeout_ack_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/timeout_ack", 120.0);
   send_waypoints_auvs_following_ = FarolGimmicks::getParameters<bool>(nh_private_, "mission_planner/send_waypoints_auvs_following", false);
-  wp_distance_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/wp_distance", 40);
+  wp_distance_along_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/wp_distance_along", 40.0);
+  wp_distance_cross_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/wp_distance_cross", 15.0);
+  wp_offset_along_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/wp_offset_along", 0.0);
+  wp_offset_cross_ = FarolGimmicks::getParameters<double>(nh_private_, "mission_planner/wp_offset_cross", 10.0);
 }
 
 bool MissionPlannerNode::interestZoneService(mission_planner::InterestZone::Request &req,
@@ -448,13 +451,25 @@ void MissionPlannerNode::timerWaypointsCallback(const ros::TimerEvent &event) {
   // if sending waypoints using CANARIAS ist_ros package is enabled AND
   // if path following has successfully started for all participating vehicles
   if (send_waypoints_auvs_following_ && mission_started_) {
-    // if we have position from both participating vehicles (we are considering only 2 AUVs/Gliders)
-    if (glider0_State_ != max_coords_ && glider1_State_ != max_coords_) {
+    std::vector<double> gliders_avg;
+
+    if (participating_veh_.size() >= 2 && glider0_State_ != max_coords_ && glider1_State_ != max_coords_) {
+      // if we have position from both participating vehicles (we are considering only 2 AUVs/Gliders)
       std::vector<double> gliders_avg = {(glider0_State_[0] + glider1_State_[0])/2,
                                          (glider0_State_[1] + glider1_State_[1])/2};
 
-      mission_planner_alg_->sendWaypointsToSailboat(gliders_avg, path_main_orientation_, waypoints_pub_, wp_distance_);
+    } else if (participating_veh_.size() == 1 && 
+               (glider0_State_ != max_coords_ || glider1_State_ != max_coords_)) {
+      // if there is only one participating vehicle and we have one of the gliders' State
+      std::vector<double> gliders_avg = (glider0_State_ != max_coords_) ? std::vector<double>{glider0_State_[0], 
+                                                                                              glider0_State_[1]} 
+                                                                        : std::vector<double>{glider1_State_[0], 
+                                                                                              glider1_State_[1]};
     }
+
+    mission_planner_alg_->sendWaypointsToSailboat(gliders_avg, path_main_orientation_, waypoints_pub_,
+                                                  wp_distance_along_, wp_distance_cross_,
+                                                  wp_offset_along_, wp_offset_cross_);
   }
   // ROS_WARN("timerwaypoints");
 }
