@@ -451,25 +451,38 @@ void MissionPlannerNode::timerWaypointsCallback(const ros::TimerEvent &event) {
   // if sending waypoints using CANARIAS ist_ros package is enabled AND
   // if path following has successfully started for all participating vehicles
   if (send_waypoints_auvs_following_ && mission_started_) {
-    std::vector<double> gliders_avg;
+    ROS_WARN("Trying to send waypoints to Sailboat.");
 
     if (participating_veh_.size() >= 2 && glider0_State_ != max_coords_ && glider1_State_ != max_coords_) {
       // if we have position from both participating vehicles (we are considering only 2 AUVs/Gliders)
-      std::vector<double> gliders_avg = {(glider0_State_[0] + glider1_State_[0])/2,
-                                         (glider0_State_[1] + glider1_State_[1])/2};
+      gliders_avg_ = {(glider0_State_[0] + glider1_State_[0])/2,
+                      (glider0_State_[1] + glider1_State_[1])/2};
+
+      ROS_WARN("Computed gliders_avg based on 2 gliders.");
 
     } else if (participating_veh_.size() == 1 && 
                (glider0_State_ != max_coords_ || glider1_State_ != max_coords_)) {
       // if there is only one participating vehicle and we have one of the gliders' State
-      std::vector<double> gliders_avg = (glider0_State_ != max_coords_) ? std::vector<double>{glider0_State_[0], 
-                                                                                              glider0_State_[1]} 
-                                                                        : std::vector<double>{glider1_State_[0], 
-                                                                                              glider1_State_[1]};
+      gliders_avg_ = (glider0_State_ != max_coords_) ? std::vector<double>{glider0_State_[0], 
+                                                                           glider0_State_[1]} 
+                                                     : std::vector<double>{glider1_State_[0], 
+                                                                           glider1_State_[1]};
+
+      ROS_WARN("Computed gliders_avg based on 1 glider.");
+
+    } else if (glider0_State_ == max_coords_ && glider1_State_ == max_coords_) {
+      ROS_WARN("Mission started but had no USBL measurements of other gliders.");
+      return;
     }
 
-    mission_planner_alg_->sendWaypointsToSailboat(gliders_avg, path_main_orientation_, waypoints_pub_,
+    ROS_WARN("Sending waypoints to Sailboat based on %ld different usbl measurements.", participating_veh_.size());
+    mission_planner_alg_->test(gliders_avg_);
+    mission_planner_alg_->sendWaypointsToSailboat(gliders_avg_, path_main_orientation_,
+                                                  waypoints_pub_,
                                                   wp_distance_along_, wp_distance_cross_,
                                                   wp_offset_along_, wp_offset_cross_);
+
+    ROS_WARN("Sent waypoints!");
   }
   // ROS_WARN("timerwaypoints");
 }

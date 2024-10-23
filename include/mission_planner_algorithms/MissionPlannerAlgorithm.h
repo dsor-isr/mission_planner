@@ -40,8 +40,8 @@ class MissionPlannerAlgorithm {
 
     void sendWaypointsToSailboat(std::vector<double> gliders_avg, double path_main_orientation, 
                                  ros::Publisher sailboat_waypoints_pub, 
-                                 double wp_distance_along_, double wp_distance_cross_,
-                                 double wp_offset_along_, double wp_offset_cross_);
+                                 double wp_distance_along, double wp_distance_cross,
+                                 double wp_offset_along, double wp_offset_cross);
 
   private:
 

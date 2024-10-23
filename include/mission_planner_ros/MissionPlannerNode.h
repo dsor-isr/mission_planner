@@ -121,6 +121,7 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   std::string mission_string_;
   bool mission_started_ = false;
   double path_main_orientation_ = 0.0;
+  std::vector<double> gliders_avg_;
   std::vector<double> glider0_State_ = {MAX_VALUE, MAX_VALUE};
   std::vector<double> glider1_State_ = {MAX_VALUE, MAX_VALUE};
  	
