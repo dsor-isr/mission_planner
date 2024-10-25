@@ -78,6 +78,7 @@ bool MissionPlannerNode::interestZoneService(mission_planner::InterestZone::Requ
   std::vector<int> ids = {vehicle_id_};
 
   // start new mission according to zone of interest published
+  // uses path post rotation specified in the config file (addons.yaml)
   mission_string_ = mission_planner_alg_->startNewMission(req.northing_min, req.northing_max, req.easting_min, req.easting_max,
                                                           ids[0], -1, -1, -1, dist_inter_vehicles_,
                                                           path_orientation_, veh_pos_, min_turning_radius_, resolution_,
@@ -113,6 +114,18 @@ void MissionPlannerNode::interestZoneCallback(const mission_planner::mInterestZo
     return;
   }
 
+  // check utm zone
+  if (msg.utm_zone < 1 || msg.utm_zone > 60) {
+    ROS_WARN_STREAM("Interest Zone not sent to other vehicles. Invalid UTM Zone.");
+    return;
+  }
+
+  // check target_depth
+  if (msg.target_depth < 0) {
+    ROS_WARN_STREAM("Interest Zone not sent to other vehicles. Invalid target depth.");
+    return;
+  }
+
   // convert set of participating vehicles' ids to vector
   std::vector<int> ids(participating_veh_.begin(), participating_veh_.end());
 
@@ -120,6 +133,8 @@ void MissionPlannerNode::interestZoneCallback(const mission_planner::mInterestZo
   mission_planner::mNewIZMission new_mission_msg;
 
   new_mission_msg.interest_zone = msg;
+  // make sure angle sent acoustically to gliders is in [0, 360] deg
+  new_mission_msg.interest_zone.rotation_angle = FarolGimmicks::wrap2pi(new_mission_msg.interest_zone.rotation_angle/180*M_PI, 0)/M_PI*180;
 
   new_mission_msg.ID0 = ids[0];
   new_mission_msg.ID1 = (ids.size() < 2) ? -1 : ids[1];
@@ -139,12 +154,16 @@ void MissionPlannerNode::interestZoneCallback(const mission_planner::mInterestZo
   last_IZ_mission_.interest_zone.northing_max = new_mission_msg.interest_zone.northing_max;
   last_IZ_mission_.interest_zone.easting_min = new_mission_msg.interest_zone.easting_min;
   last_IZ_mission_.interest_zone.easting_max = new_mission_msg.interest_zone.easting_max;
+  last_IZ_mission_.interest_zone.utm_zone = new_mission_msg.interest_zone.utm_zone;
+  last_IZ_mission_.interest_zone.rotation_angle = new_mission_msg.interest_zone.rotation_angle;
+  last_IZ_mission_.interest_zone.target_depth = new_mission_msg.interest_zone.target_depth;
   last_IZ_mission_.ID0 = new_mission_msg.ID0;
   last_IZ_mission_.ID1 = new_mission_msg.ID1;
   last_IZ_mission_.ID2 = new_mission_msg.ID2;
   last_IZ_mission_.ID3 = new_mission_msg.ID3;
 }
 
+// runs on glider
 void MissionPlannerNode::newIZMissionZoneAcommsCallback(const mission_planner::mNewIZMission &msg) { 
   // ack msg
   mission_planner::mMissionStartedAck ack_msg;
@@ -158,11 +177,13 @@ void MissionPlannerNode::newIZMissionZoneAcommsCallback(const mission_planner::m
 
   } else { // everything ok, let's start PF
     // start new mission according to zone of interest published
+    // uses path post rotation (rotation_angle) specified in the interest zone message!
     mission_string_ = mission_planner_alg_->startNewMission(msg.interest_zone.northing_min, msg.interest_zone.northing_max, 
                                                             msg.interest_zone.easting_min, msg.interest_zone.easting_max,
                                                             msg.ID0, msg.ID1, msg.ID2, msg.ID3, dist_inter_vehicles_,
                                                             path_orientation_, veh_pos_, min_turning_radius_, resolution_,
-                                                            path_type_, path_speed_, mission_string_pub_, path_post_rotation_,
+                                                            path_type_, path_speed_, mission_string_pub_,
+                                                            msg.interest_zone.rotation_angle,
                                                             true);
     
     // send acoustic message back saying PF HAS started
@@ -237,6 +258,7 @@ double MissionPlannerNode::getPathMainOrientationFromMissionString(const std::st
   return 0.0;
 }
 
+// runs on sailboat/ASV
 void MissionPlannerNode::missionStartedAckAcommsCallback(const mission_planner::mMissionStartedAck &msg) {
   // check if mission started
   if (!msg.started_ack) {
@@ -257,11 +279,12 @@ void MissionPlannerNode::missionStartedAckAcommsCallback(const mission_planner::
   if (mission_started_veh_ == participating_veh_) {
     ROS_WARN_STREAM("All participating vehicles acknowledged mission start.");
     // actually doesn't "START" a new mission, just creates the mission string and writes to file, because of FALSE flag
+    // uses path post rotation (rotation_angle) specified in the interest zone message!
     mission_string_ = mission_planner_alg_->startNewMission(last_IZ_mission_.interest_zone.northing_min, last_IZ_mission_.interest_zone.northing_max, 
                                                             last_IZ_mission_.interest_zone.easting_min, last_IZ_mission_.interest_zone.easting_max,
                                                             last_IZ_mission_.ID0, last_IZ_mission_.ID1, last_IZ_mission_.ID2, last_IZ_mission_.ID3, dist_inter_vehicles_,
                                                             path_orientation_, veh_pos_, min_turning_radius_, resolution_,
-                                                            path_type_, path_speed_, mission_string_pub_, path_post_rotation_,
+                                                            path_type_, path_speed_, mission_string_pub_, last_IZ_mission_.interest_zone.rotation_angle,
                                                             false);
 
     // no longer waiting for acks
@@ -476,11 +499,11 @@ void MissionPlannerNode::timerWaypointsCallback(const ros::TimerEvent &event) {
     }
 
     ROS_WARN("Sending waypoints to Sailboat based on %ld different usbl measurements.", participating_veh_.size());
-    mission_planner_alg_->test(gliders_avg_);
     mission_planner_alg_->sendWaypointsToSailboat(gliders_avg_, path_main_orientation_,
                                                   waypoints_pub_,
                                                   wp_distance_along_, wp_distance_cross_,
-                                                  wp_offset_along_, wp_offset_cross_);
+                                                  wp_offset_along_, wp_offset_cross_,
+                                                  last_IZ_mission_.interest_zone.utm_zone);
 
     ROS_WARN("Sent waypoints!");
   }

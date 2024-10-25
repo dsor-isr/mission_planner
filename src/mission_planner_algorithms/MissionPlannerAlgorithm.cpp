@@ -447,7 +447,8 @@ std::vector<double> MissionPlannerAlgorithm::computeWaypoint(const std::vector<d
 void MissionPlannerAlgorithm::sendWaypointsToSailboat(std::vector<double> gliders_avg, double path_main_orientation, 
                                                       ros::Publisher sailboat_waypoints_pub, 
                                                       double wp_distance_along, double wp_distance_cross,
-                                                      double wp_offset_along, double wp_offset_cross) {
+                                                      double wp_offset_along, double wp_offset_cross,
+                                                      int utm_zone) {
   // path main orientation in rad
   double alpha = path_main_orientation/180*M_PI;
 
@@ -483,8 +484,8 @@ void MissionPlannerAlgorithm::sendWaypointsToSailboat(std::vector<double> glider
   //                  | - c + c_offset |
   std::vector<double> w4 = computeWaypoint(gliders_avg,  std::vector<double>{- a + a_offset, - c + c_offset}, alpha);
   
-  // build vector with all waypoints coordinates in order
-  std::vector<double> wps{w1[0], w1[1], w2[0], w2[1], w3[0], w3[1], w4[0], w4[1]};
+  // build vector with all waypoints coordinates in order PLUS UTM_ZONE IN THE END
+  std::vector<double> wps{w1[0], w1[1], w2[0], w2[1], w3[0], w3[1], w4[0], w4[1], static_cast<double>(utm_zone)};
 
   ROS_WARN("MISSION PLANNER AFTER WPS COMPUTING: easting/northings:\n%f/%f\n%f/%f\n%f/%f\n%f/%f", 
                                                                   w1[0], w1[1], w2[0], w2[1],
