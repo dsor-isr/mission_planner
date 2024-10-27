@@ -191,6 +191,11 @@ void MissionPlannerNode::newIZMissionZoneAcommsCallback(const mission_planner::m
 
     // reset set of vehicle IDs which have acknowledged their mission has started
     mission_started_veh_.clear();
+
+    // set depth reference to be read my glider interface, which will set target_depth via BSD
+    std_msgs::Float64 msg;
+    msg.data = msg.interest_zone.target_depth;
+    depth_ref_pub_.publish(msg);
   }
 
   ack_msg.vehicle_ID = vehicle_id_;
@@ -420,6 +425,10 @@ void MissionPlannerNode::initializePublishers() {
   waypoints_pub_ = nh_private_.advertise<std_msgs::Float64MultiArray>(
       FarolGimmicks::getParameters<std::string>(
           nh_private_, "topics/publishers/waypoints", "dummy"), 1);
+
+  depth_ref_pub_ = nh_private_.advertise<std_msgs::Float64>(
+      FarolGimmicks::getParameters<std::string>(
+          nh_private_, "topics/publishers/depth_ref", "dummy"), 1);
 }
 
 

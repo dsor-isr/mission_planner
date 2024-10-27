@@ -83,6 +83,7 @@ Developers: #DSORTeam -> @tecnico.ulisboa.pt Instituto Superior Tecnico
   ros::Publisher stop_all_pf_pub_;
   ros::Publisher status_flag_pub_;
   ros::Publisher waypoints_pub_;
+  ros::Publisher depth_ref_pub_;
 
  	// @.@ Timer
  	ros::Timer timer_;           ///< ROS Timer
