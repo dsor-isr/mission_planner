@@ -193,9 +193,9 @@ void MissionPlannerNode::newIZMissionZoneAcommsCallback(const mission_planner::m
     mission_started_veh_.clear();
 
     // set depth reference to be read my glider interface, which will set target_depth via BSD
-    std_msgs::Float64 msg;
-    msg.data = msg.interest_zone.target_depth;
-    depth_ref_pub_.publish(msg);
+    std_msgs::Float64 new_msg;
+    new_msg.data = msg.interest_zone.target_depth;
+    depth_ref_pub_.publish(new_msg);
   }
 
   ack_msg.vehicle_ID = vehicle_id_;
