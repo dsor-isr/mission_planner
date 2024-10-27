@@ -22,6 +22,7 @@ add_message_files(
   # mInterestZone.msg
   # mMissionStartedAck.msg
   # mNewIZMission.msg
+  # mGsnifferData.msg
 )
 
 add_service_files(
